@@ -1,0 +1,22 @@
+
+
+DICOM C-Find 
+
+смотрим: 
+
+том 4, стр 79.
+
+там же в приложении С на стр. 80
+
+C.1.4 Service Definition
+Two peer DICOM AEs implement a SOP Class of the Query/Retrieve Service Class with 
+one serving in the SCU role and one serving in the SCP role. 
+SOP Classes of the Query/Retrieve Service Class are implemented using the DIMSE-C C-FIND, 
+C-MOVE, and C- GET services as defined in PS3.7.
+Both a baseline and extended behavior is defined for the DIMSE-C C-FIND, 
+C-MOVE, and C-GET services. Baseline behavior specifies a minimum level of conformance for 
+all implementations to facilitate interoperability. 
+Extended behavior enhances the baseline behavior to provide additional features that may be negotiated 
+independently at Association establishment time.
+
+

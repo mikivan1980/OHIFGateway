@@ -1,0 +1,320 @@
+
+***
+
+Где искать, что meteor ожидает получить в json.
+
+sduties-list список исследований:
+
+..\master\onCoreViewer\Packages\ohif-study-list\server\services\qido\studies.js:66
+
+resultData.forEach(function(study) { ... }
+
+
+//код
+resultData.forEach(function(study) {
+        studies.push({
+            studyInstanceUid: DICOMWeb.getString(study['0020000D']),
+            // 00080005 = SpecificCharacterSet
+            studyDate: DICOMWeb.getString(study['00080020']),
+            studyTime: DICOMWeb.getString(study['00080030']),
+            accessionNumber: DICOMWeb.getNumber(study['00080050']),
+            referringPhysicianName: DICOMWeb.getString(study['00080090']),
+            // 00081190 = URL
+            patientName: DICOMWeb.getName(study['00100010']),
+            patientId: DICOMWeb.getString(study['00100020']),
+            patientBirthdate: DICOMWeb.getString(study['00100030']),
+            patientSex: DICOMWeb.getString(study['00100040']),
+            studyId: DICOMWeb.getString(study['00200010']),
+            numberOfStudyRelatedSeries: DICOMWeb.getString(study['00201206']),
+            numberOfStudyRelatedInstances: DICOMWeb.getString(study['00201208']),
+            studyDescription: DICOMWeb.getString(study['00081030']),
+            // modality: DICOMWeb.getString(study['00080060']),
+            // modalitiesInStudy: DICOMWeb.getString(study['00080061']),
+            modalities: DICOMWeb.getString(DICOMWeb.getModalities(study['00080060'], study['00080061']))
+		});
+    });
+	
+	
+	
+	
+	studyInstanceUid:              "0020000D",
+    studyDate:                     "00080020",
+    studyTime:                     "00080030",
+    accessionNumber:               "00080050",
+    referringPhysicianName:        "00080090",
+    patientName:                   "00100010",
+    patientId:                     "00100020",
+    patientBirthdate:              "00100030",
+    patientSex:                    "00100040",
+    studyId:                       "00200010",
+    numberOfStudyRelatedSeries:    "00201206",
+    numberOfStudyRelatedInstances: "00201208",
+    studyDescription:              "00081030",
+    modality:                      "00080060",
+    modalitiesInStudy:             "00080061",
+    
+	
+	
+	
+	
+	
+***
+
+metadata - список инстенсов для последующей загрузки изображений во вьювер
+
+..\master\onCoreViewer\Packages\ohif-study-list\server\services\wado\retrieveMetadata.js:203
+
+function resultDataToStudyMetadata(server, studyInstanceUid, resultData) { ... }
+
+
+//код	
+unction resultDataToStudyMetadata(server, studyInstanceUid, resultData) {
+    var seriesMap = {};
+    var seriesList = [];
+
+    if (!resultData.length) {
+        return;
+    }
+
+    var anInstance = resultData[0];
+    if (!anInstance) {
+        return;
+    }
+
+    var studyData = {
+        seriesList: seriesList,
+        patientName: DICOMWeb.getName(anInstance['00100010']),
+        patientId: DICOMWeb.getString(anInstance['00100020']),
+        patientAge: DICOMWeb.getNumber(anInstance['00101010']),
+        patientSize: DICOMWeb.getNumber(anInstance['00101020']),
+        patientWeight: DICOMWeb.getNumber(anInstance['00101030']),
+        accessionNumber: DICOMWeb.getString(anInstance['00080050']),
+        studyDate: DICOMWeb.getString(anInstance['00080020']),
+        modalities: DICOMWeb.getString(anInstance['00080061']),
+        studyDescription: DICOMWeb.getString(anInstance['00081030']),
+        imageCount: DICOMWeb.getString(anInstance['00201208']),
+        studyInstanceUid: DICOMWeb.getString(anInstance['0020000D']),
+        institutionName: DICOMWeb.getString(anInstance['00080080'])
+    };
+
+    resultData.forEach(function(instance) {
+        var seriesInstanceUid = DICOMWeb.getString(instance['0020000E']);
+        var series = seriesMap[seriesInstanceUid];
+        if (!series) {
+            series = {
+                seriesDescription: DICOMWeb.getString(instance['0008103E']),
+                modality: DICOMWeb.getString(instance['00080060']),
+                seriesInstanceUid: seriesInstanceUid,
+                seriesNumber: DICOMWeb.getNumber(instance['00200011']),
+                seriesDate: DICOMWeb.getString(instance['00080021']),
+                seriesTime: DICOMWeb.getString(instance['00080031']),
+                instances: []
+            };
+            seriesMap[seriesInstanceUid] = series;
+            seriesList.push(series);
+        }
+
+        var sopInstanceUid = DICOMWeb.getString(instance['00080018']);
+
+        const wadouri = buildInstanceWadoUrl(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid);
+        const baseWadoRsUri = buildInstanceWadoRsUri(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid);
+        const wadorsuri = buildInstanceFrameWadoRsUri(server, studyInstanceUid, seriesInstanceUid, sopInstanceUid);
+
+        var instanceSummary = {
+            imageType: DICOMWeb.getString(instance['00080008']),
+            sopClassUid: DICOMWeb.getString(instance['00080016']),
+            modality: DICOMWeb.getString(instance['00080060']),
+            sopInstanceUid: sopInstanceUid,
+            instanceNumber: DICOMWeb.getNumber(instance['00200013']),
+            imagePositionPatient: DICOMWeb.getString(instance['00200032']),
+            imageOrientationPatient: DICOMWeb.getString(instance['00200037']),
+            frameOfReferenceUID: DICOMWeb.getString(instance['00200052']),
+            sliceLocation: DICOMWeb.getNumber(instance['00201041']),
+            samplesPerPixel: DICOMWeb.getNumber(instance['00280002']),
+            photometricInterpretation: DICOMWeb.getString(instance['00280004']),
+            planarConfiguration: DICOMWeb.getNumber(instance['00280006']),
+            rows: DICOMWeb.getNumber(instance['00280010']),
+            columns: DICOMWeb.getNumber(instance['00280011']),
+            pixelSpacing: DICOMWeb.getString(instance['00280030']),
+            pixelAspectRatio: DICOMWeb.getString(instance['00280034']),
+            bitsAllocated: DICOMWeb.getNumber(instance['00280100']),
+            bitsStored: DICOMWeb.getNumber(instance['00280101']),
+            highBit: DICOMWeb.getNumber(instance['00280102']),
+            pixelRepresentation: DICOMWeb.getNumber(instance['00280103']),
+            smallestPixelValue: DICOMWeb.getNumber(instance['00280106']),
+            largestPixelValue: DICOMWeb.getNumber(instance['00280107']),
+            windowCenter: DICOMWeb.getString(instance['00281050']),
+            windowWidth: DICOMWeb.getString(instance['00281051']),
+            rescaleIntercept: DICOMWeb.getNumber(instance['00281052']),
+            rescaleSlope: DICOMWeb.getNumber(instance['00281053']),
+            rescaleType: DICOMWeb.getNumber(instance['00281054']),
+            sourceImageInstanceUid: getSourceImageInstanceUid(instance),
+            laterality: DICOMWeb.getString(instance['00200062']),
+            viewPosition: DICOMWeb.getString(instance['00185101']),
+            acquisitionDateTime: DICOMWeb.getString(instance['0008002A']),
+            numberOfFrames: DICOMWeb.getNumber(instance['00280008']),
+            frameIncrementPointer: getFrameIncrementPointer(instance['00280009']),
+            frameTime: DICOMWeb.getNumber(instance['00181063']),
+            frameTimeVector: parseFloatArray(DICOMWeb.getString(instance['00181065'])),
+            sliceThickness: DICOMWeb.getNumber(instance['00180050']),
+            lossyImageCompression: DICOMWeb.getString(instance['00282110']),
+            derivationDescription: DICOMWeb.getString(instance['00282111']),
+            lossyImageCompressionRatio: DICOMWeb.getString(instance['00282112']),
+            lossyImageCompressionMethod: DICOMWeb.getString(instance['00282114']),
+            echoNumber: DICOMWeb.getString(instance['00180086']),
+            contrastBolusAgent: DICOMWeb.getString(instance['00180010']),
+            radiopharmaceuticalInfo: getRadiopharmaceuticalInfo(instance),
+            baseWadoRsUri: baseWadoRsUri,
+            wadouri: WADOProxy.convertURL(wadouri, server),
+            wadorsuri: WADOProxy.convertURL(wadorsuri, server),
+            imageRendering: server.imageRendering,
+            thumbnailRendering: server.thumbnailRendering
+        };
+
+        // Get additional information if the instance uses "PALETTE COLOR" photometric interpretation
+        if (instanceSummary.photometricInterpretation === 'PALETTE COLOR') {
+            const redPaletteColorLookupTableDescriptor = parseFloatArray(DICOMWeb.getString(instance['00281101']));
+            const greenPaletteColorLookupTableDescriptor = parseFloatArray(DICOMWeb.getString(instance['00281102']));
+            const bluePaletteColorLookupTableDescriptor = parseFloatArray(DICOMWeb.getString(instance['00281103']));
+            const palettes = getPaletteColors(server, instance, redPaletteColorLookupTableDescriptor);
+
+            if (palettes) {
+                if (palettes.uid) {
+                    instanceSummary.paletteColorLookupTableUID = palettes.uid;
+                }
+                instanceSummary.redPaletteColorLookupTableData = palettes.red;
+                instanceSummary.greenPaletteColorLookupTableData = palettes.green;
+                instanceSummary.bluePaletteColorLookupTableData = palettes.blue;
+                instanceSummary.redPaletteColorLookupTableDescriptor = redPaletteColorLookupTableDescriptor;
+                instanceSummary.greenPaletteColorLookupTableDescriptor = greenPaletteColorLookupTableDescriptor;
+                instanceSummary.bluePaletteColorLookupTableDescriptor = bluePaletteColorLookupTableDescriptor;
+            }
+        }
+
+        series.instances.push(instanceSummary);
+
+    });	
+	
+	
+	
+    patientName:                          "00100010",
+    patientId:                            "00100020",
+    patientAge:                           "00101010",
+    patientSize:                          "00101020",
+    patientWeight:                        "00101030",
+    accessionNumber:                      "00080050",
+    studyDate:                            "00080020",
+    modalities:                           "00080061",
+    studyDescription:                     "00081030",
+    imageCount:                           "00201208",
+    studyInstanceUid:                     "0020000D",
+    institutionName:                      "00080080",
+    seriesInstanceUid                     "0020000E",
+    seriesDescription:                    "0008103E",
+    modality:                             "00080060",
+    seriesNumber:                         "00200011",
+    seriesDate:                           "00080021",
+    seriesTime:                           "00080031",
+    imageType:                            "00080008",
+    sopClassUid:                          "00080016",
+    sopInstanceUid:                       "00080018";
+    instanceNumber:                       "00200013",
+    imagePositionPatient:                 "00200032",
+    imageOrientationPatient:              "00200037",
+    frameOfReferenceUID:                  "00200052",
+    sliceLocation:                        "00201041",
+    samplesPerPixel:                      "00280002",
+    photometricInterpretation:            "00280004",
+    planarConfiguration:                  "00280006",
+    rows:                                 "00280010",
+    columns:                              "00280011",
+    pixelSpacing:                         "00280030",
+    pixelAspectRatio:                     "00280034",
+    bitsAllocated:                        "00280100",
+    bitsStored:                           "00280101",
+    highBit:                              "00280102",
+    pixelRepresentation:                  "00280103",
+    smallestPixelValue:                   "00280106",
+    largestPixelValue:                    "00280107",
+    windowCenter:                         "00281050",
+    windowWidth:                          "00281051",
+    rescaleIntercept:                     "00281052",
+    rescaleSlope:                         "00281053",
+    rescaleType:                          "00281054",
+    laterality:                           "00200062",
+    viewPosition:                         "00185101",
+    acquisitionDateTime:                  "0008002A",
+    numberOfFrames:                       "00280008",
+    frameIncrementPointer:                "00280009",
+    frameTime:                            "00181063",
+    frameTimeVector:                      "00181065",
+    sliceThickness:                       "00180050",
+    lossyImageCompression:                "00282110",
+    derivationDescription:                "00282111",
+    lossyImageCompressionRatio:           "00282112",
+    lossyImageCompressionMethod:          "00282114",
+    echoNumber:                           "00180086",
+    contrastBolusAgent:                   "00180010",
+
+
+	
+	
+	
+       @tag='00100010',
+    or @tag='00100020',
+    or @tag='00101010',
+    or @tag='00101020',
+    or @tag='00101030',
+    or @tag='00080050',
+    or @tag='00080020',
+    or @tag='00080061',
+    or @tag='00081030',
+    or @tag='00201208',
+    or @tag='0020000D',
+    or @tag='00080080',
+    or @tag='0020000E',
+    or @tag='0008103E',
+    or @tag='00080060',
+    or @tag='00200011',
+    or @tag='00080021',
+    or @tag='00080031',
+    or @tag='00080008',
+    or @tag='00080016',
+    or @tag='00080018';
+    or @tag='00200013',
+    or @tag='00200032',
+    or @tag='00200037',
+    or @tag='00200052',
+    or @tag='00201041',
+    or @tag='00280002',
+    or @tag='00280004',
+    or @tag='00280006',
+    or @tag='00280010',
+    or @tag='00280011',
+    or @tag='00280030',
+    or @tag='00280034',
+    or @tag='00280100',
+    or @tag='00280101',
+    or @tag='00280102',
+    or @tag='00280103',
+    or @tag='00280106',
+    or @tag='00280107',
+    or @tag='00281050',
+    or @tag='00281051',
+    or @tag='00281052',
+    or @tag='00281053',
+    or @tag='00281054',
+    or @tag='00200062',
+    or @tag='00185101',
+    or @tag='0008002A',
+    or @tag='00280008',
+    or @tag='00280009',
+    or @tag='00181063',
+    or @tag='00181065',
+    or @tag='00180050',
+    or @tag='00282110',
+    or @tag='00282111',
+    or @tag='00282112',
+    or @tag='00282114',
+    or @tag='00180086',
+    or @tag='00180010',

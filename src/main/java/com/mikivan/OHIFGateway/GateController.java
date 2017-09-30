@@ -4,10 +4,7 @@ package com.mikivan.OHIFGateway;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -15,6 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Map;
 import org.dcm4che3.tool.findscu.FindSCU;
@@ -29,7 +30,7 @@ public class GateController {
 
     @RequestMapping( value = "/mikivan/studies", method = RequestMethod.GET )
     @ResponseBody
-    public ResponseEntity<String> getStudylist(
+    public ResponseEntity<String> getStudyList(
             @RequestParam Map<String, String> queryMap ) {
 
 
@@ -55,7 +56,7 @@ public class GateController {
                     (!entry.getKey().equals("includefield"))
                     ) {
 
-                opts.add("-m");opts.add(entry.getKey() + "=" + entry.getValue());
+                opts.add("-m"); opts.add(entry.getKey() + "=" + entry.getValue());
 
                 System.out.println("-m " + entry.getKey() + "=" + entry.getValue());
             }
@@ -67,15 +68,15 @@ public class GateController {
                       "00100040", "00200010", "00201206", "00201208", "00081030", "00080060", "00080061"};
 
         for(String teg:r) {
-            opts.add("-r");opts.add(teg);
+            opts.add("-r"); opts.add(teg);
         }
 
         opts.add("--out-cat");
 
         //либо либо либо
         //opts.add("-X");
-        //opts.add("--xsl");opts.add("xslt/oncore-json_compact.xsl");
-        opts.add("--xsl");opts.add("xslt/mikivan-studies.xsl");
+        //opts.add("--xsl"); opts.add("xslt/oncore-json_compact.xsl");
+        opts.add("--xsl"); opts.add("xslt/mikivan-studies.xsl");
 
         opts.add("-K");
         opts.add("-I");
@@ -124,115 +125,105 @@ public class GateController {
 //======================================================================================================================
     @RequestMapping( value = "/mikivan/studies/{studyUID}/metadata", method = RequestMethod.GET )
     @ResponseBody
-    public ResponseEntity<String> getStudyMedadata( @PathVariable String studyUID ) {
+    public ResponseEntity<String> getStudyMetaData( @PathVariable String studyUID ) {
 
         //http://192.168.0.74:8080/mikivan/studies/1.2.840.113704.1.111.4156.1367430813.2/metadata
 
         //log.info("/mikivan/studies/{studyUID}/metadata");
         System.out.println("/mikivan/studies/{studyUID}/metadata = " + "/mikivan/studies/" + studyUID + "/metadata");
 
-        ArrayList<String> test = new ArrayList<String>();
+        ArrayList<String> opts = new ArrayList<String>();
 
-        test.add("-b"); test.add("IVAN@192.168.0.74:4006");
-        test.add("-c"); test.add("PACS01@192.168.0.35:4006");
-        test.add("-L"); test.add("IMAGE");
-        test.add("-m");test.add("0020000D=" + studyUID);
+        opts.add("-b"); opts.add("IVAN@192.168.0.74:4006");
+        opts.add("-c"); opts.add("PACS01@192.168.0.35:4006");
+        opts.add("-L"); opts.add("IMAGE");
 
-//        test.add("-r");test.add("00080020");
-//        test.add("-r");test.add("00080030");
-//        test.add("-r");test.add("00080060");
-//        test.add("-r");test.add("00080061");
-////         test.add("-r");test.add("00080090");
-////         test.add("-r");test.add("00081030");
-//        test.add("-r");test.add("00081190");
-//        test.add("-r");test.add("00100010");
-//        test.add("-r");test.add("00100020");
-//        test.add("-r");test.add("00100030");
-//        test.add("-r");test.add("00100040");
-//        test.add("-r");test.add("0020000D");
-//        test.add("-r");test.add("00200010");
-//        test.add("-r");test.add("00201206");
-//        test.add("-r");test.add("00201208");
+        opts.add("-m");opts.add("0020000D=" + studyUID);
 
-        test.add("--out-cat");
-        test.add("--xsl");test.add("xslt/oncore-json_compact.xsl");
-        test.add("-K");
-        test.add("-I");
+        //параметры взяты из метеора
+        String[] r = {"00100010", "00100020", "00101010", "00101020", "00101030", "00080050", "00080020",
+                      "00080061", "00081030", "00201208", "0020000D", "00080080", "0020000E", "0008103E",
+                      "00080060", "00200011", "00080021", "00080031", "00080008", "00080016", "00080018",
+                      "00200013", "00200032", "00200037", "00200052", "00201041", "00280002", "00280004",
+                      "00280006", "00280010", "00280011", "00280030", "00280034", "00280100", "00280101",
+                      "00280102", "00280103", "00280106", "00280107", "00281050", "00281051", "00281052",
+                      "00281053", "00281054", "00200062", "00185101", "0008002A", "00280008", "00280009",
+                      "00181063", "00181065", "00180050", "00282110", "00282111", "00282112", "00282114",
+                      "00180086", "00180010" };
+
+        for(String teg:r) {
+            opts.add("-r"); opts.add(teg);
+        }
+
+        opts.add("--out-cat");
+
+        //opts.add("--xsl"); opts.add("xslt/oncore-json_compact.xsl");
+        opts.add("--xsl"); opts.add("xslt/mikivan-metadata.xsl");
+
+        opts.add("-K");
+        opts.add("-I");
 
 
-        String val2 =  "";
+        String toViewMetaData =  "";
 
-        //[injections of mikivan][0004]
         try {
 
-            String[] args = new String[test.size()];
+            String[] args = new String[opts.size()];
 
-            test.toArray(args);
-
-/*             String[] args = {
-                     "-b", "IVAN@192.168.0.74:4006",
-                     "-c", "PACS01@192.168.0.35:4006",
-                     "-L", "STUDY",
-                     "-m", "StudyDate=20120101-20161231",
-//                     "-m", "ModalitiesInStudy=CT",
-                     "-m", "PatientSex=M",
-//                     "-r", "00080005",
-                     "-r", "00080020",
-                     "-r", "00080030",
-//                     "-r", "00080050",
-                     "-r", "00080060",
-                     "-r", "00080061",
-//                     "-r", "00080090",
-//                     "-r", "00081030",
-//                     "-r", "00081190",
-                     "-r", "00100010",
-                     "-r", "00100020",
-                     "-r", "00100030",
-                     "-r", "00100040",
-                     "-r", "0020000D",
-                     "-r", "00200010",
-                     "-r", "00201206",
-                     "-r", "00201208",
-                     "--out-cat",
-                     "--xsl", "xslt/oncore-json_compact.xsl",//"-X",//
-                     "-K",
-                     "-I"
-             };*/
-
+            opts.toArray(args);
 
             FindSCU main = new FindSCU(args);
 
             String jsonOutput = main.doFind();
 
-
-            //вывод doFind();
             if( jsonOutput == null ){
-                System.out.println("jsonOutput == null");
+                System.out.println("jsonOutput is null");
             }
             else {
-                System.out.println(jsonOutput);
+                System.out.println("jsonOutput is created");
 
-                val2 =  val2 + "[" + jsonOutput + "{}]";
+                toViewMetaData = toViewMetaData + "[" + jsonOutput + "{}]";
             }
-
-
         } catch (Exception e) {
             System.err.println("findscu: " + e.getMessage());
             e.printStackTrace();
             System.exit(2);
         }
-        //[end][0004]
 
 
-
-        //готовим ответ на запрос /mikivan/studylist
+        //готовим ответ на запрос
         HttpHeaders hdrs = new HttpHeaders();
         final MediaType mediaType = MediaType.APPLICATION_JSON;
         hdrs.setContentType(mediaType);
 
-        final ResponseEntity<String> rsp = new ResponseEntity<String>(val2, hdrs, HttpStatus.OK);
+        final ResponseEntity<String> rsp = new ResponseEntity<String>(toViewMetaData, hdrs, HttpStatus.OK);
 
         return rsp;
+    }
+
+
+//======================================================================================================================
+//======================================================================================================================
+//======================================================================================================================
+    @RequestMapping(value = "/mikivan/wado", method = RequestMethod.GET)
+    @ResponseBody
+    public HttpEntity<byte[]> getInstance(
+            @RequestParam Map<String, String> queryMap) throws IOException {
+
+        System.out.println("/mikivan/wado");
+
+        final Path path = Paths.get("d:\\dop\\java\\OHIFGateway\\_docs\\test-dicom-file.dcm");
+        final String fileName = path.getFileName().toString();
+
+        byte[] documentBody = Files.readAllBytes(path);
+
+        HttpHeaders header = new HttpHeaders();
+        header.set("Content-Type", "application/dicom");
+        header.set(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=" + fileName.replace(" ", "_"));
+        header.setContentLength(documentBody.length);
+
+        return new HttpEntity<byte[]>(documentBody, header);
     }
 
 

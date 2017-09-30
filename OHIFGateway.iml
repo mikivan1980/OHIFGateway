@@ -11,34 +11,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../master-mikivan-dcm4che/dcm4che-assembly/target/dcm4che-5.10.6-bin/dcm4che-5.10.6/lib" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-        <jarDirectory url="file://$MODULE_DIR$/../master-mikivan-dcm4che/dcm4che-assembly/target/dcm4che-5.10.6-bin/dcm4che-5.10.6/lib" recursive="false" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../master-mikivan-dcm4che/dcm4che-assembly/target/dcm4che-5.10.6-bin/dcm4che-5.10.6/etc/findscu" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../master-mikivan-dcm4che/dcm4che-assembly/target/dcm4che-5.10.6-bin/dcm4che-5.10.6/etc/certs" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-starter:1.5.6.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot:1.5.6.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-context:4.3.10.RELEASE" level="project" />
@@ -134,5 +106,14 @@
     <orderEntry type="library" name="Maven: org.dcm4che.tool:dcm4che-tool-common:5.10.6" level="project" />
     <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.2" level="project" />
     <orderEntry type="library" name="Maven: org.dcm4che.tool:dcm4che-tool-findscu:5.10.6" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/dcm4che-5.10.6-bin.zip!/dcm4che-5.10.6/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

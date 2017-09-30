@@ -99,8 +99,71 @@
 
 
 
+[<?xml version="1.0" encoding="UTF-8"?><NativeDicomModel xml:space="preserve">
+<DicomAttribute tag="00080020" vr="DA">
+<Value number="1">20130502</Value>
+</DicomAttribute>
+<DicomAttribute tag="00080030" vr="TM">
+<Value number="1">110516</Value>
+</DicomAttribute>
+<DicomAttribute tag="00080050" vr="SH"/>
+<DicomAttribute tag="00080052" vr="CS">
+<Value number="1">STUDY</Value>
+</DicomAttribute>
+<DicomAttribute tag="00080061" vr="CS">
+<Value number="1">CT</Value>
+</DicomAttribute>
+<DicomAttribute tag="00080090" vr="PN"/>
+<DicomAttribute tag="00081030" vr="LO"/>
+<DicomAttribute tag="00100010" vr="PN">
+<PersonName number="1">
+<Alphabetic>
+<FamilyName>Mikhailovskiy D.I.</FamilyName>
+</Alphabetic>
+</PersonName>
+</DicomAttribute>
+<DicomAttribute tag="00100020" vr="LO">
+<Value number="1">AMB</Value>
+</DicomAttribute>
+<DicomAttribute tag="00100030" vr="DA">
+<Value number="1">20050608</Value>
+</DicomAttribute>
+<DicomAttribute tag="00100040" vr="CS">
+<Value number="1">M</Value>
+</DicomAttribute>
+<DicomAttribute tag="0020000D" vr="UI">
+<Value number="1">1.2.840.113704.1.111.4156.1367430813.2</Value>
+</DicomAttribute>
+<DicomAttribute tag="00200010" vr="SH">
+<Value number="1">22525</Value>
+</DicomAttribute>
+<DicomAttribute tag="00201206" vr="IS">
+<Value number="1">2</Value>
+</DicomAttribute>
+<DicomAttribute tag="00201208" vr="IS">
+<Value number="1">573</Value>
+</DicomAttribute>
+</NativeDicomModel>
+{}]
 
 
+
+[
+{"00080020":{"vr":"DA","Value":["20130502"]},"00080030":{"vr":"TM","Value":["110516"]},"00080050":{"vr":"SH"},
+"00080052":{"vr":"CS","Value":["STUDY"]},"00080061":{"vr":"CS","Value":["CT"]},"00080090":{"vr":"PN"},"00081030":{"vr":"LO"},
+"00100010":{"vr":"PN","Value":[ "Mikhailovskiy D.I."]},"00100020":{"vr":"LO","Value":["AMB"]},
+"00100030":{"vr":"DA","Value":["20050608"]},"00100040":{"vr":"CS","Value":["M"]},
+"0020000D":{"vr":"UI","Value":["1.2.840.113704.1.111.4156.1367430813.2"]},"00200010":{"vr":"SH","Value":["22525"]},
+"00201206":{"vr":"IS","Value":[2]},"00201208":{"vr":"IS","Value":[573]},
+"00081190":{"vr":"UR","Value":["http://127.0.0.1/dicom-web/studies/1.2.840.113704.1.111.4156.1367430813.2/metadata"]}},
+{"00080020":{"vr":"DA","Value":["20150226"]},"00080030":{"vr":"TM","Value":["115847"]},"00080050":{"vr":"SH"},
+"00080052":{"vr":"CS","Value":["STUDY"]},"00080061":{"vr":"CS","Value":["CT"]},"00080090":{"vr":"PN"},"00081030":{"vr":"LO","Value":["HEAD"]},
+"00100010":{"vr":"PN","Value":[ "Poddubnaya L.V."]},"00100020":{"vr":"LO","Value":["telemed-02.03.2015"]},
+"00100030":{"vr":"DA","Value":["19620804"]},"00100040":{"vr":"CS","Value":["F"]},
+"0020000D":{"vr":"UI","Value":["1.2.826.0.1.3680043.2.135.735303.80295205.7.1425311270.428.3"]},
+"00200010":{"vr":"SH","Value":["7475"]},"00201206":{"vr":"IS","Value":[1]},"00201208":{"vr":"IS","Value":[377]},
+"00081190":{"vr":"UR","Value":["http://127.0.0.1/dicom-web/studies/1.2.826.0.1.3680043.2.135.735303.80295205.7.1425311270.428.3/metadata"]}},
+{"00080020":{"vr":"DA","Value":["20120119"]},"00080030":{"vr":"TM","Value":["095220"]},"00080050":{"vr":"SH"},"00080052":{"vr":"CS","Value":["STUDY"]},"00080061":{"vr":"CS","Value":["CT"]},"00080090":{"vr":"PN"},"00081030":{"vr":"LO","Value":["Thorax+head cito!"]},"00100010":{"vr":"PN","Value":[ "Popov A.A."]},"00100020":{"vr":"LO","Value":["2XO 927"]},"00100030":{"vr":"DA"},"00100040":{"vr":"CS","Value":["M"]},"0020000D":{"vr":"UI","Value":["1.2.840.113704.1.111.848.1326955214.94"]},"00200010":{"vr":"SH","Value":["15288"]},"00201206":{"vr":"IS","Value":[7]},"00201208":{"vr":"IS","Value":[869]},"00081190":{"vr":"UR","Value":["http://127.0.0.1/dicom-web/studies/1.2.840.113704.1.111.848.1326955214.94/metadata"]}},{"00080020":{"vr":"DA","Value":["20110411"]},"00080030":{"vr":"TM","Value":["181142"]},"00080050":{"vr":"SH"},"00080052":{"vr":"CS","Value":["STUDY"]},"00080061":{"vr":"CS","Value":["CT"]},"00080090":{"vr":"PN"},"00081030":{"vr":"LO","Value":["Sinus"]},"00100010":{"vr":"PN","Value":[ "Popov A.A."]},"00100020":{"vr":"LO","Value":["AMB 1900"]},"00100030":{"vr":"DA","Value":["19721024"]},"00100040":{"vr":"CS","Value":["M"]},"0020000D":{"vr":"UI","Value":["1.2.840.113619.2.55.3.2831155969.2784.1302530667.380"]},"00200010":{"vr":"SH","Value":["15429"]},"00201206":{"vr":"IS","Value":[6]},"00201208":{"vr":"IS","Value":[338]},"00081190":{"vr":"UR","Value":["http://127.0.0.1/dicom-web/studies/1.2.840.113619.2.55.3.2831155969.2784.1302530667.380/metadata"]}},{"00080020":{"vr":"DA","Value":["20110426"]},"00080030":{"vr":"TM","Value":["182652"]},"00080050":{"vr":"SH"},"00080052":{"vr":"CS","Value":["STUDY"]},"00080061":{"vr":"CS","Value":["CT"]},"00080090":{"vr":"PN"},"00081030":{"vr":"LO","Value":["Head"]},"00100010":{"vr":"PN","Value":[ "Popova E.A."]},"00100020":{"vr":"LO","Value":["amb 1720"]},"00100030":{"vr":"DA"},"00100040":{"vr":"CS","Value":["F"]},"0020000D":{"vr":"UI","Value":["1.2.840.113619.2.55.3.2831155969.2776.1303828012.529"]},"00200010":{"vr":"SH","Value":["15470"]},"00201206":{"vr":"IS","Value":[2]},"00201208":{"vr":"IS","Value":[34]},"00081190":{"vr":"UR","Value":["http://127.0.0.1/dicom-web/studies/1.2.840.113619.2.55.3.2831155969.2776.1303828012.529/metadata"]}},{"00080020":{"vr":"DA","Value":["20120312"]},"00080030":{"vr":"TM","Value":["141620"]},"00080050":{"vr":"SH"},"00080052":{"vr":"CS","Value":["STUDY"]},"00080061":{"vr":"CS","Value":["CT"]},"00080090":{"vr":"PN"},"00081030":{"vr":"LO","Value":["BNCHS"]},"00100010":{"vr":"PN","Value":[ "Popova V.V."]},"00100020":{"vr":"LO","Value":["NEVR. 3175"]},"00100030":{"vr":"DA"},"00100040":{"vr":"CS","Value":["F"]},"0020000D":{"vr":"UI","Value":["1.2.840.113704.1.111.42268.1331549920.8"]},"00200010":{"vr":"SH","Value":["16190"]},"00201206":{"vr":"IS","Value":[4]},"00201208":{"vr":"IS","Value":[403]},"00081190":{"vr":"UR","Value":["http://127.0.0.1/dicom-web/studies/1.2.840.113704.1.111.42268.1331549920.8/metadata"]}},{}]
 
 
 

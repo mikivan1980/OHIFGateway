@@ -1,25 +1,28 @@
 package com.mikivan.OHIFGateway;
 
 
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.http.*;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.PathVariable;
+    //import org.slf4j.Logger;
+    //import org.slf4j.LoggerFactory;
+    import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+    import org.springframework.http.*;
+    import org.springframework.stereotype.Controller;
+    import org.springframework.web.bind.annotation.RequestMapping;
+    import org.springframework.web.bind.annotation.RequestMethod;
+    import org.springframework.web.bind.annotation.RequestParam;
+    import org.springframework.web.bind.annotation.ResponseBody;
+    import org.springframework.web.bind.annotation.PathVariable;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Map;
-import org.dcm4che3.tool.findscu.FindSCU;
+    import java.io.IOException;
+    import java.nio.file.Files;
+    import java.nio.file.Path;
+    import java.nio.file.Paths;
+    import java.util.ArrayList;
+    import java.util.Map;
 
+    //import org.dcm4che3.tool.findscu.FindSCU;
+    import com.mikivan.service.CFindSCU;
+    //import com.mikivan.service.CStoreSCP;
+    //import com.mikivan.service.CMoveSCU;
 
 
 @Controller
@@ -28,69 +31,57 @@ public class GateController {
 
     //private static final Logger log = LoggerFactory.getLogger(GateController.class);
 
+
+
+
     @RequestMapping( value = "/mikivan/studies", method = RequestMethod.GET )
     @ResponseBody
     public ResponseEntity<String> getStudyList(
             @RequestParam Map<String, String> queryMap ) {
 
+//        String[] bind   = { "IVAN",    "192.168.121.101", "49049"};//строгий порядок
+//        String[] remote = { "WATCHER", "192.168.121.100", "4006"};//строгий порядок
+        String[] bind   = { "IVAN",   "192.168.0.74", "4006"};//строгий порядок
+        String[] remote = { "PACS01", "192.168.0.35", "4006"};//строгий порядок
 
-        ArrayList<String> opts = new ArrayList<String>();
+        String[] opts   = {};
+        //String[] m      = { "StudyDate", "20171004-20171004", "ModalitiesInStudy", "CT"};
 
-        opts.add("-b"); opts.add("IVAN@192.168.0.74:4006");
-        opts.add("-c"); opts.add("PACS01@192.168.0.35:4006");
-        opts.add("-L"); opts.add("STUDY");
-
+        //параметры взяты из метеора
+        String[] r      = {"0020000D", "00080020", "00080030", "00080050", "00080090", "00100010", "00100020",
+                           "00100030", "00100040", "00200010", "00201206", "00201208", "00081030", "00080060",
+                           "00080061"};
 
 //onCoreViewer/Packages/ohif-study-list/server/services/qido/studies.js:20
-//PatientName
-//PatientID
-//AccessionNumber
-//StudyDescription
-//ModalitiesInStudy
+//PatientName, PatientID, AccessionNumber, StudyDescription, ModalitiesInStudy, StudyDate
+//
 //limit         игнорируем (а многоли включать данных в ответ)
 //includefield  игнорируем (какие еще поля  вернуть, мы вернем необходимый минимум)
-//StudyDate
+
+        ArrayList<String> mOptsQuery = new ArrayList<String>();
+
         for( Map.Entry<String, String> entry : queryMap.entrySet() ){
 
-            if(  (!entry.getKey().equals("limit")) &&
-                    (!entry.getKey().equals("includefield"))
-                    ) {
+            if(  (!entry.getKey().equals("limit")) && (!entry.getKey().equals("includefield"))  ){
 
-                opts.add("-m"); opts.add(entry.getKey() + "=" + entry.getValue());
+                mOptsQuery.add(entry.getKey()); mOptsQuery.add(entry.getValue());
 
-                System.out.println("-m " + entry.getKey() + "=" + entry.getValue());
+                System.out.println("m: " + entry.getKey() + "=" + entry.getValue());
             }
         }
 
+        String[] m = new String[mOptsQuery.size()];
+
+        mOptsQuery.toArray(m);
+
+
 //http://192.168.0.74:8080/mikivan/studies?PatientName=Mikh*&ModalitiesInStudy=CT&includefield=00081030%2C00080060
-        //параметры взяты из метеора
-        String[] r = {"0020000D", "00080020", "00080030", "00080050", "00080090", "00100010", "00100020", "00100030",
-                      "00100040", "00200010", "00201206", "00201208", "00081030", "00080060", "00080061"};
-
-        for(String teg:r) {
-            opts.add("-r"); opts.add(teg);
-        }
-
-        opts.add("--out-cat");
-
-        //либо либо либо
-        //opts.add("-X");
-        //opts.add("--xsl"); opts.add("xslt/oncore-json_compact.xsl");
-        opts.add("--xsl"); opts.add("xslt/mikivan-studies.xsl");
-
-        opts.add("-K");
-        opts.add("-I");
-
 
         String toViewStudyList =  "";
 
         try {
 
-            String[] args = new String[opts.size()];
-
-            opts.toArray(args);
-
-            FindSCU main = new FindSCU(args);
+            CFindSCU main = new CFindSCU(bind, remote, opts, "xslt/mikivan-studies.xsl","STUDY", m, r);
 
             String jsonOutput = main.doFind();
 
@@ -103,7 +94,7 @@ public class GateController {
                 toViewStudyList =  toViewStudyList + "[" + jsonOutput + "{}]";
             }
         } catch (Exception e) {
-            System.err.println("findscu: " + e.getMessage());
+            System.err.println("c-find-scu: " + e.getMessage());
             e.printStackTrace();
             System.exit(2);
         }
@@ -132,13 +123,13 @@ public class GateController {
         //log.info("/mikivan/studies/{studyUID}/metadata");
         System.out.println("/mikivan/studies/{studyUID}/metadata = " + "/mikivan/studies/" + studyUID + "/metadata");
 
-        ArrayList<String> opts = new ArrayList<String>();
+//        String[] bind   = { "IVAN",    "192.168.121.101", "49049"};//строгий порядок
+//        String[] remote = { "WATCHER", "192.168.121.100", "4006"};//строгий порядок
+        String[] bind   = { "IVAN",   "192.168.0.74", "4006"};//строгий порядок
+        String[] remote = { "PACS01", "192.168.0.35", "4006"};//строгий порядок
 
-        opts.add("-b"); opts.add("IVAN@192.168.0.74:4006");
-        opts.add("-c"); opts.add("PACS01@192.168.0.35:4006");
-        opts.add("-L"); opts.add("IMAGE");
-
-        opts.add("-m");opts.add("0020000D=" + studyUID);
+        String[] opts = {};
+        String[] m    = {"0020000D", studyUID};
 
         //параметры взяты из метеора
         String[] r = {"00100010", "00100020", "00101010", "00101020", "00101030", "00080050", "00080020",
@@ -151,28 +142,12 @@ public class GateController {
                       "00181063", "00181065", "00180050", "00282110", "00282111", "00282112", "00282114",
                       "00180086", "00180010" };
 
-        for(String teg:r) {
-            opts.add("-r"); opts.add(teg);
-        }
-
-        opts.add("--out-cat");
-
-        //opts.add("--xsl"); opts.add("xslt/oncore-json_compact.xsl");
-        opts.add("--xsl"); opts.add("xslt/mikivan-metadata.xsl");
-
-        opts.add("-K");
-        opts.add("-I");
-
 
         String toViewMetaData =  "";
 
         try {
 
-            String[] args = new String[opts.size()];
-
-            opts.toArray(args);
-
-            FindSCU main = new FindSCU(args);
+            CFindSCU main = new CFindSCU(bind, remote, opts, "xslt/mikivan-metadata.xsl","IMAGE", m, r);
 
             String jsonOutput = main.doFind();
 

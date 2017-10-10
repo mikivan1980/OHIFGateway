@@ -6,7 +6,7 @@
 
     <groupId>com.mikivan</groupId>
     <artifactId>OHIFGateway</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
 
 
@@ -58,45 +58,33 @@
             <artifactId>spring-boot-starter-web-services</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.dcm4che</groupId>
-            <artifactId>dcm4che-core</artifactId>
-            <version>${dcm4cheVersion}</version>
-            <scope>compile</scope>
-        </dependency>
 
-        <dependency>
-            <groupId>org.dcm4che</groupId>
-            <artifactId>dcm4che-net</artifactId>
-            <version>${dcm4cheVersion}</version>
-            <scope>compile</scope>
-        </dependency>
 
-        <dependency>
-            <groupId>org.dcm4che.tool</groupId>
-            <artifactId>dcm4che-tool-common</artifactId>
-            <version>${dcm4cheVersion}</version>
-            <scope>compile</scope>
-        </dependency>
 
         <dependency>
             <groupId>org.dcm4che.tool</groupId>
             <artifactId>dcm4che-tool-findscu</artifactId>
             <version>${dcm4cheVersion}</version>
-            <scope>compile</scope>
         </dependency>
 
+
+        <dependency>
+            <groupId>org.dcm4che.tool</groupId>
+            <artifactId>dcm4che-tool-storescp</artifactId>
+            <version>${dcm4cheVersion}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.dcm4che.tool</groupId>
+            <artifactId>dcm4che-tool-movescu</artifactId>
+            <version>${dcm4cheVersion}</version>
+        </dependency>
 
     </dependencies>
 
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+
+
 
 </project>

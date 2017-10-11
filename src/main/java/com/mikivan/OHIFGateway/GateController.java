@@ -19,33 +19,158 @@ package com.mikivan.OHIFGateway;
     import java.util.ArrayList;
     import java.util.Map;
 
-    //import org.dcm4che3.tool.findscu.FindSCU;
     import com.mikivan.service.CFindSCU;
-    //import com.mikivan.service.CStoreSCP;
-    //import com.mikivan.service.CMoveSCU;
+    import com.mikivan.service.CStoreSCP;
+    import com.mikivan.service.CMoveSCU;
 
 
 @Controller
 @EnableAutoConfiguration
 public class GateController {
 
+//   private static String[] bindSCU   = new String[]{ "IVAN",    "192.168.0.74",    "49049"};  //строгий порядок
+//   private static String[] bindSCP   = new String[]{ "IVAN",    "192.168.0.74",    "4006"};   //строгий порядок
+//   private static String[] remoteSCP = new String[]{ "PACS01",  "192.168.0.35",    "4006"};   //строгий порядок
+
+    private static String[] bindSCU   = new String[]{"IVAN",    "192.168.121.101", "49049"};  //строгий порядок
+    private static String[] bindSCP   = new String[]{"IVAN",    "192.168.121.101", "4006"};   //строгий порядок
+    private static String[] remoteSCP = new String[]{"WATCHER", "192.168.121.100", "4006"};   //строгий порядок
+
+    private static String[] optsFindSCU  = {};
+    private static String[] optsMoveSCU  = {};
+    private static String[] optsStoreSCP = {};
+
+
     //private static final Logger log = LoggerFactory.getLogger(GateController.class);
 
+    private static CStoreSCP CStoreListenerSCP;
 
 
+//======================================================================================================================
+//======================================================================================================================
+//======================================================================================================================
+    @RequestMapping(value = "/mikivan/c-store-scp/create", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> createStoreSCP( @RequestParam String password) {
+        //192.168.121.101:8080/mikivan/c-store-scp/create?password=admin
+        String toBrowser = "";
 
+        if(password.equals("admin")){
+            toBrowser = "Valid password! ";
+            try{
+
+                this.CStoreListenerSCP = new CStoreSCP(bindSCP, optsStoreSCP);
+
+                toBrowser += "Service Store SCP is create and started!";
+
+            } catch (Exception e) {
+
+                toBrowser += "Service Store SCP is NOT create and NOT started!";
+                System.err.println("c-store-scp: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else{
+            toBrowser = "No valid password!";
+        }
+
+        //ответ на запрос <ip>:8080/mikivan/c-store-scp/create?password=admin
+        HttpHeaders hdrs = new HttpHeaders();
+        final MediaType mediaType = MediaType.TEXT_PLAIN;
+        hdrs.setContentType(mediaType);
+
+        final ResponseEntity<String> rsp = new ResponseEntity<String>(toBrowser, hdrs, HttpStatus.OK);
+
+        return rsp;
+
+    }
+
+//======================================================================================================================
+//======================================================================================================================
+//======================================================================================================================
+    @RequestMapping(value = "/mikivan/c-store-scp/stop", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> stopStoreSCP( @RequestParam String password) {
+        //192.168.121.101:8080/mikivan/c-store-scp/stop?password=admin
+        String toBrowser = "";
+
+        if(password.equals("admin")){
+            toBrowser = "Valid password! ";
+            try{
+
+                this.CStoreListenerSCP.stop();
+
+                toBrowser += "Service Store SCP is stoped!";
+
+            } catch (Exception e) {
+
+                toBrowser += "Service Store SCP is NOT stoped!";
+                System.err.println("c-store-scp: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else{
+            toBrowser = "No valid password!";
+        }
+
+        //ответ на запрос <ip>:8080/mikivan/c-store-scp/start?password=admin
+        HttpHeaders hdrs = new HttpHeaders();
+        final MediaType mediaType = MediaType.TEXT_PLAIN;
+        hdrs.setContentType(mediaType);
+
+        final ResponseEntity<String> rsp = new ResponseEntity<String>(toBrowser, hdrs, HttpStatus.OK);
+
+        return rsp;
+
+    }
+
+//======================================================================================================================
+//======================================================================================================================
+//======================================================================================================================
+    @RequestMapping(value = "/mikivan/c-store-scp/start", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<String> startStoreSCP( @RequestParam String password) {
+        //192.168.121.101:8080/mikivan/stop?password=admin
+        String toBrowser = "";
+
+        if(password.equals("admin")){
+            toBrowser = "Valid password! ";
+            try{
+
+                this.CStoreListenerSCP.start();
+
+
+                toBrowser += "Service Store SCP is start!";
+
+            } catch (Exception e) {
+
+                toBrowser += "Service Store SCP is NOT start!";
+                System.err.println("c-store-scp: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else{
+            toBrowser = "No valid password!";
+        }
+
+        //ответ на запрос <ip>:8080/mikivan/start?password=admin
+        HttpHeaders hdrs = new HttpHeaders();
+        final MediaType mediaType = MediaType.TEXT_PLAIN;
+        hdrs.setContentType(mediaType);
+
+        final ResponseEntity<String> rsp = new ResponseEntity<String>(toBrowser, hdrs, HttpStatus.OK);
+
+        return rsp;
+
+    }
+
+//======================================================================================================================
+//======================================================================================================================
+//======================================================================================================================
     @RequestMapping( value = "/mikivan/studies", method = RequestMethod.GET )
     @ResponseBody
     public ResponseEntity<String> getStudyList(
             @RequestParam Map<String, String> queryMap ) {
-
-//        String[] bind   = { "IVAN",    "192.168.121.101", "49049"};//строгий порядок
-//        String[] remote = { "WATCHER", "192.168.121.100", "4006"};//строгий порядок
-        String[] bind   = { "IVAN",   "192.168.0.74", "4006"};//строгий порядок
-        String[] remote = { "PACS01", "192.168.0.35", "4006"};//строгий порядок
-
-        String[] opts   = {};
-        //String[] m      = { "StudyDate", "20171004-20171004", "ModalitiesInStudy", "CT"};
 
         //параметры взяты из метеора
         String[] r      = {"0020000D", "00080020", "00080030", "00080050", "00080090", "00100010", "00100020",
@@ -58,6 +183,7 @@ public class GateController {
 //limit         игнорируем (а многоли включать данных в ответ)
 //includefield  игнорируем (какие еще поля  вернуть, мы вернем необходимый минимум)
 
+        //String[] m      = { "StudyDate", "20171004-20171004", "ModalitiesInStudy", "CT"};
         ArrayList<String> mOptsQuery = new ArrayList<String>();
 
         for( Map.Entry<String, String> entry : queryMap.entrySet() ){
@@ -81,7 +207,7 @@ public class GateController {
 
         try {
 
-            CFindSCU main = new CFindSCU(bind, remote, opts, "xslt/mikivan-studies.xsl","STUDY", m, r);
+            CFindSCU main = new CFindSCU( bindSCU, remoteSCP, optsFindSCU, "xslt/mikivan-studies.xsl","STUDY", m, r);
 
             String jsonOutput = main.doFind();
 
@@ -123,12 +249,7 @@ public class GateController {
         //log.info("/mikivan/studies/{studyUID}/metadata");
         System.out.println("/mikivan/studies/{studyUID}/metadata = " + "/mikivan/studies/" + studyUID + "/metadata");
 
-//        String[] bind   = { "IVAN",    "192.168.121.101", "49049"};//строгий порядок
-//        String[] remote = { "WATCHER", "192.168.121.100", "4006"};//строгий порядок
-        String[] bind   = { "IVAN",   "192.168.0.74", "4006"};//строгий порядок
-        String[] remote = { "PACS01", "192.168.0.35", "4006"};//строгий порядок
 
-        String[] opts = {};
         String[] m    = {"0020000D", studyUID};
 
         //параметры взяты из метеора
@@ -147,7 +268,7 @@ public class GateController {
 
         try {
 
-            CFindSCU main = new CFindSCU(bind, remote, opts, "xslt/mikivan-metadata.xsl","IMAGE", m, r);
+            CFindSCU main = new CFindSCU( bindSCU, remoteSCP, optsFindSCU, "xslt/mikivan-metadata.xsl","IMAGE", m, r);
 
             String jsonOutput = main.doFind();
 

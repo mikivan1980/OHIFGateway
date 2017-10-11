@@ -145,11 +145,32 @@ public class CStoreSCP {
         this.isConstructorWithArgs = true;
     }
 
+    public void start()throws Exception {
+        if(!isConstructorWithArgs){
+
+            this.device.setExecutor2( Executors.newCachedThreadPool() );
+            this.device.setScheduledExecutor( Executors.newSingleThreadScheduledExecutor() );
+
+            this.device.bindConnections();
+
+            this.isConstructorWithArgs = true;
+        }
+
+    }
+
     public void stop(){
         if(isConstructorWithArgs){
 
+            this.device.unbindConnections();
+
             this.device.getExecutor2().shutdown();
             this.device.getScheduledExecutor().shutdown();
+
+            //this.ae.removeConnection(this.conn);
+
+            //this.device.removeApplicationEntity(this.ae);
+            //this.device.removeConnection(this.conn);
+
 
             this.isConstructorWithArgs = false;
         }

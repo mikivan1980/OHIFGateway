@@ -34,21 +34,15 @@ public class dcmModifier{
 
     public boolean doModifier( File seedFile )  throws IOException {
 
-        //File seedFile   = new File(inFile);
-        //File outputFile = new File(outFile);
-
         Attributes seedAttributes = null;
         //Attributes metaAttributes = null;
         String tsuid;
         String iuid;
-        //String cuid;
-
-        //Attributes fmiOld = null;
-        //Attributes fmi = null;
 
         DicomInputStream inDicomObject = null;
 
         try {
+
             inDicomObject = new DicomInputStream(seedFile); // here inDicomObject === inDicomFile
             inDicomObject.setIncludeBulkData(IncludeBulkData.URI);
 
@@ -57,18 +51,10 @@ public class dcmModifier{
 
             tsuid = inDicomObject.getTransferSyntax();
             iuid  = seedAttributes.getString(Tag.AffectedSOPInstanceUID);
-            //cuid  = seedAttributes.getString(Tag.AffectedSOPClassUID);
-
-
-//            fmiOld = din.readFileMetaInformation();
-//
-//            if (fmiOld == null || !fmiOld.containsValue(Tag.TransferSyntaxUID)
-//                    || !fmiOld.containsValue(Tag.MediaStorageSOPClassUID)
-//                    || !fmiOld.containsValue(Tag.MediaStorageSOPInstanceUID))
-//                fmiOld = seedAttrs.createFileMetaInformation(din.getTransferSyntax());
         }
         catch(Exception e) {
-            e.printStackTrace();
+            System.out.println("this in file is not dicom file!!!! or in file is not find");
+            //e.printStackTrace();
             SafeClose.close(inDicomObject);
             return false;
         }
@@ -79,8 +65,9 @@ public class dcmModifier{
         DicomOutputStream outDicomObject = null;
         Attributes modified = new Attributes();
 
-        System.out.println("[start]     seedAttrs.size() = " + seedAttributes.size());
-        System.out.println("        overrideAttrs.size() = " + overrideAttributes.size());
+        // ()
+        System.out.println("[start] seedAttributes.size() = " + seedAttributes.size());
+        System.out.println("    overrideAttributes.size() = " + overrideAttributes.size());
 
 //        if(!modified.isEmpty()) {
 //            if(modified.contains(Tag.StudyInstanceUID)) {
@@ -98,8 +85,13 @@ public class dcmModifier{
             return false;
         }
 
-        System.out.println("             modified.size() = " + modified.size());
-        System.out.println("[end]       seedAttrs.size() = " + seedAttributes.size());
+        System.out.println("              modified.size() = " + modified.size());
+        System.out.println("[end]   seedAttributes.size() = " + seedAttributes.size());
+
+        for (int i = 0; i < modified.size(); i++)
+            System.out.println( modified.getValue( modified.tags()[i] ) + " -> " +
+                      overrideAttributes.getValue( modified.tags()[i] )
+            );
 
 
         try {
@@ -115,7 +107,7 @@ public class dcmModifier{
                 Attributes meta = seedAttributes.createFileMetaInformation(tsuid);
                 outDicomObject.writeDataset(meta, seedAttributes);
             } else{
-                System.out.println( "Error created directory..." + readyFile.getParent() );
+                System.out.println( "[Error created directory]/> " + readyFile.getParent() );
             }
 
         } catch (IOException e) {
@@ -138,51 +130,56 @@ public class dcmModifier{
     }
 
 
-    public ArrayList<File> scanDirectory(String scanDirStr){
-        ArrayList<File> findDirs  = new ArrayList<>();
-        ArrayList<File> findFiles = new ArrayList<>();
+    public void scanDirectory(String scanDirStr){
+
+        ArrayList<File> find = new ArrayList<>();
 
         try {
             File root = new File(scanDirStr);
 
             if(root.isDirectory()) {
-                findDirs.add(root);
+                find.add(root);
             } else {
                 System.out.println("[Error, root is NOT directory]/> " + scanDirStr );
-                return findFiles;
+                return;
             }
         } catch (Exception e){
             System.out.println( "[Error of root directory]/> " + scanDirStr + "  | e: " + e.toString() );
-            return findFiles;
+            return;
         }
 
+        int item = 0;
         int count = 0;
         int ignorDirs =0;
-        while ( count < findDirs.size() ){
+        while ( item < find.size() ){
 
             try {
 
-                File[] buffer = findDirs.get(count).listFiles();
+                if( find.get(item).isDirectory() ){
 
-                for(File test : buffer){
+                    for(File test : find.get(item).listFiles()) {
 
-                    if( test.isDirectory() ) findDirs.add(test);
-                    if( test.isFile() )      findFiles.add(test);
+                        if (test.isDirectory()) find.add(test);
 
+                        if (test.isFile()) {
+
+                            //test.isDicom();
+                            count++;
+
+                        }
+                    }
                 };
             } catch ( Exception e ){
                 ignorDirs++;
-                //System.out.println("[Error read of list files]" + findDirs.get(count).getAbsolutePath());
             }
 
-            System.out.println( findDirs.size() + " | " + findFiles.size() + " | " + ignorDirs );
+            System.out.print("\r" + item + " | " + find.size() + " | " + count + " | " + ignorDirs );
 
-            count++;
+            item++;
         }
+        System.out.println( item + " | " + find.size() + " | " + count + " | " + ignorDirs + "\r");
 
-
-
-        return findFiles;
+        return;
     }
 
 
@@ -193,12 +190,9 @@ public class dcmModifier{
         try {
 
             String directory = "D://dop//java//OHIFGateway//";
+            String filepath  = "_docs//{00080060}{00080020}//[{00100010}]-[ID_{00100020}]//{00080018}.dcm";
 
-            String seedPathFile = "_docs/test-dicom-file.dcm";
-            //String outputPathFile = "_docs/MODIFIER_DICOM_FILE.dcm";
-
-
-            String filepath = "_docs//{00080060}{00080020}//[{00100010}]-[ID_{00100020}]//{00080018}.dcm";
+            String seedPathFile = "_docs/xslt-for-ohif.txt";//"_docs/test-dicom-file.dcm";
 
 
             String[] override = { "StudyDate", "20171004", "00080060", "MR"};//m
@@ -214,6 +208,9 @@ public class dcmModifier{
             main.updateOverrideAttrs(override2);
 
             System.out.println( "Result of modifier is -> " + main.doModifier( new File(seedPathFile)) );
+
+
+            main.scanDirectory("d:\\dop\\");
 
 
         } catch (Exception e) {

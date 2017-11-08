@@ -1,7 +1,8 @@
 package com.mikivan.service;
 
 
-        import java.io.File;
+        import java.io.*;
+        import javax.json.*;
         import java.io.IOException;
         import java.util.ArrayList;
 
@@ -20,17 +21,60 @@ package com.mikivan.service;
 
 public class dcmModifier{
 
+    private File sourceDirectory;
     private File storageDirectory;
+    private File personalDirectory;
     private AttributesFormat patternPathOverrideFile;
     private Attributes overrideAttributes = new Attributes();
 
 
-    public dcmModifier(String[] overrideAttributesStr, String storageDirectoryStr, String patternPathOverrideFileStr) {
+    public dcmModifier( File config_json ) throws IOException{
 
-        CLIUtils.addAttributes(this.overrideAttributes, overrideAttributesStr);
-        this.patternPathOverrideFile = new AttributesFormat(patternPathOverrideFileStr);
-        storageDirectory = new File( storageDirectoryStr );
+        InputStream in = new FileInputStream( config_json );
+
+        JsonObject object = Json.createReader(in).readObject();
+
+        this.sourceDirectory         = new File(object.getJsonObject("Path").getString("Source"));
+        this.storageDirectory        = new File(object.getJsonObject("Path").getString("Destination"));
+        this.patternPathOverrideFile = new AttributesFormat( object.getJsonObject("Path").getString("Pattern") );
+        this.personalDirectory       = new File(object.getJsonObject("Path").getString("Personal"));
+
+        System.out.println( "[JSON][Source Directory]/>   " + this.sourceDirectory.getAbsolutePath() );
+        System.out.println( "[JSON][Storage Directory]/>  " + this.storageDirectory.getAbsolutePath() );
+        System.out.println( "[JSON][Pattern Path]/>       " + this.patternPathOverrideFile.toString() );
+        System.out.println( "[JSON][Personal Directory]/> " + this.personalDirectory.getAbsolutePath() );
+
+
+        int n = object.getJsonArray("Attributes").size();
+        for(int i = 0; i < n ; i++ ){
+            String Tag    = object.getJsonArray("Attributes").getJsonObject(i).getString("Tag");
+            String Value  = object.getJsonArray("Attributes").getJsonObject(i).getString("Value");
+            String Action = object.getJsonArray("Attributes").getJsonObject(i).getString("Action");
+
+            if(Action.equals("Override")) {
+
+                String[] attr = {Tag, Value};
+
+                CLIUtils.addAttributes(this.overrideAttributes, attr);
+            }
+
+            System.out.println("[JSON][Attributes]/> " + Tag + " | " + Value + " | " + Action);
+
+        }
+
+        //System.out.println("[this.overrideAttributes.size()]/> " + this.overrideAttributes.size());
+
     }
+
+
+//    public void dcmModifier(String[] overrideAttributesStr, String storageDirectoryStr, String patternPathOverrideFileStr) {
+//
+//        CLIUtils.addAttributes(this.overrideAttributes, overrideAttributesStr);
+//        this.patternPathOverrideFile = new AttributesFormat(patternPathOverrideFileStr);
+//        storageDirectory = new File( storageDirectoryStr );
+//    }
+
+
 
     public boolean doModifier( File seedFile )  throws IOException {
 
@@ -53,7 +97,7 @@ public class dcmModifier{
             iuid  = seedAttributes.getString(Tag.AffectedSOPInstanceUID);
         }
         catch(Exception e) {
-            System.out.println("this in file is not dicom file!!!! or in file is not find");
+            System.out.println("[ERROR][file is not dicom or in file is not find]/> ");
             //e.printStackTrace();
             SafeClose.close(inDicomObject);
             return false;
@@ -65,9 +109,7 @@ public class dcmModifier{
         DicomOutputStream outDicomObject = null;
         Attributes modified = new Attributes();
 
-        // ()
-        System.out.println("[start] seedAttributes.size() = " + seedAttributes.size());
-        System.out.println("    overrideAttributes.size() = " + overrideAttributes.size());
+        int X1 = seedAttributes.size(), Y1 = overrideAttributes.size();
 
 //        if(!modified.isEmpty()) {
 //            if(modified.contains(Tag.StudyInstanceUID)) {
@@ -85,12 +127,14 @@ public class dcmModifier{
             return false;
         }
 
-        System.out.println("              modified.size() = " + modified.size());
-        System.out.println("[end]   seedAttributes.size() = " + seedAttributes.size());
+        int X2 = modified.size(), Y2 = seedAttributes.size();
+
+        System.out.println("[Sta]/> ( " + X1 + ", " + Y1 + ") -> ( " + X2 + ", " + Y2 + ")");
 
         for (int i = 0; i < modified.size(); i++)
-            System.out.println( modified.getValue( modified.tags()[i] ) + " -> " +
-                      overrideAttributes.getValue( modified.tags()[i] )
+            System.out.println("[MODIFIED]/> " +
+                    modified.getValue( modified.tags()[i] ) + " -> " +
+                    overrideAttributes.getValue( modified.tags()[i] )
             );
 
 
@@ -107,7 +151,7 @@ public class dcmModifier{
                 Attributes meta = seedAttributes.createFileMetaInformation(tsuid);
                 outDicomObject.writeDataset(meta, seedAttributes);
             } else{
-                System.out.println( "[Error created directory]/> " + readyFile.getParent() );
+                System.out.println( "[ERROR][directory is NOT created!]/> " + readyFile.getParent() );
             }
 
         } catch (IOException e) {
@@ -123,34 +167,42 @@ public class dcmModifier{
     }
 
 
-    public void updateOverrideAttrs(String[] overrideAttrsStr) {
+    public void updateOverrideAttributes(String[] overrideAttributesStr) {
 
+        /* //Example
+        *
+        * dcmModifier main = new dcmModifier( config );
+        *
+        * String[] override2 = { "StudyDate", "20040826", "00080060", "CT", "00100010","Anon12345"};
+        *
+        * main.updateOverrideAttributes(override2);
+        *
+        * System.out.println( "Result of modifier is -> " + main.doModifier( new File(seedPathFile)) );
+        *
+        * */
         this.overrideAttributes.removePrivateAttributes();
-        CLIUtils.addAttributes(this.overrideAttributes, overrideAttrsStr);
+        CLIUtils.addAttributes(this.overrideAttributes, overrideAttributesStr);
     }
 
 
-    public void scanDirectory(String scanDirStr){
+    public void scanDirectory(){
 
         ArrayList<File> find = new ArrayList<>();
 
         try {
-            File root = new File(scanDirStr);
-
-            if(root.isDirectory()) {
-                find.add(root);
+            if(this.sourceDirectory.isDirectory()) {
+                find.add(this.sourceDirectory);
             } else {
-                System.out.println("[Error, root is NOT directory]/> " + scanDirStr );
+                System.out.println(
+                        "[ERROR][this.sourceDirectory is NOT directory]/> " + this.sourceDirectory.getAbsolutePath());
                 return;
             }
         } catch (Exception e){
-            System.out.println( "[Error of root directory]/> " + scanDirStr + "  | e: " + e.toString() );
+            System.out.println( "[ERROR][scanDirectory]/> " + e.toString() );
             return;
         }
 
-        int item = 0;
-        int count = 0;
-        int ignorDirs =0;
+        int item = 0, count = 0, ignoreDirs = 0;
         while ( item < find.size() ){
 
             try {
@@ -164,21 +216,21 @@ public class dcmModifier{
                         if (test.isFile()) {
 
                             //test.isDicom();
+                            this.doModifier(test);
                             count++;
 
                         }
                     }
                 };
             } catch ( Exception e ){
-                ignorDirs++;
+                ignoreDirs++;
             }
 
-            System.out.print("\r" + item + " | " + find.size() + " | " + count + " | " + ignorDirs );
+            System.out.print("\r" + item + " | " + find.size() + " | " + count + " | " + ignoreDirs );
 
             item++;
         }
-        System.out.println( item + " | " + find.size() + " | " + count + " | " + ignorDirs + "\r");
-
+        System.out.println( "\n" + item + " | " + find.size() + " | " + count + " | " + ignoreDirs + "\r");
         return;
     }
 
@@ -188,33 +240,38 @@ public class dcmModifier{
     public static void main(String[] args) {
 
         try {
+            /*
+            * первый аргумент командной строк - путь к файлу config.json
+            * проверяем, доступен ли этот файл для чтения, если да - можно сделать валидацию параметров файла (не сделано)
+            * если файл конфигурации доступен - доступен - подаем его в конструктор класса new dcmModifier()
+            * в конструкторе читаются данные из json конфига и размещаются в соответствующие поля класса.
+            *
+            * */
 
-            String directory = "D://dop//java//OHIFGateway//";
-            String filepath  = "_docs//{00080060}{00080020}//[{00100010}]-[ID_{00100020}]//{00080018}.dcm";
+            File config = new File(args[0]);
 
-            String seedPathFile = "_docs/xslt-for-ohif.txt";//"_docs/test-dicom-file.dcm";
+            if( config.exists() ){
 
+                dcmModifier main = new dcmModifier( config );
 
-            String[] override = { "StudyDate", "20171004", "00080060", "MR"};//m
+                main.scanDirectory();
 
-            dcmModifier main = new dcmModifier( override, directory, filepath);
+//  For Example-1
+//                String seedPathFile = "d:\\dop\\java\\OHIFGateway\\_docs\\dcm_in\\test-dicom-file.dcm";//"_docs/test-dicom-file.dcm";
+//                System.out.println( "Result of modifier is -> " + main.doModifier( new File(seedPathFile)) );
+//
+//  For Example-2
+//                String[] override2 = { "StudyDate", "20040826", "00080060", "CT", "00100010","Anon12345"};//m
+//                main.updateOverrideAttributes(override2);
+//                System.out.println( "Result of modifier is -> " + main.doModifier( new File(seedPathFile)) );
 
-            System.out.println( "Result of modifier is -> " + main.doModifier( new File(seedPathFile)) );
-
-
-
-            String[] override2 = { "StudyDate", "20040826", "00080060", "CT", "00100010","Anon12345"};//m
-
-            main.updateOverrideAttrs(override2);
-
-            System.out.println( "Result of modifier is -> " + main.doModifier( new File(seedPathFile)) );
-
-
-            main.scanDirectory("d:\\dop\\");
+            } else {
+                System.out.println("[ERROR][json config file is NOT exists!]/> " + args[0]);
+            }
 
 
         } catch (Exception e) {
-            System.err.println("[ERROR] dcmModifier: " + e.getMessage());
+            System.err.println("[ERROR][dcmModifier]/> " + e.getMessage());
             System.exit(2);
         }
     }

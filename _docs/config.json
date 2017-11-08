@@ -1,0 +1,31 @@
+{
+
+  "Path": {
+    "Source"       : "d:\\dop\\java\\OHIFGateway\\_docs\\dcm_in\\",
+    "Destination"  : "d:\\dop\\java\\OHIFGateway\\_docs\\dcm_out\\",
+    "Pattern"      : "//{00080060}{00080020}//[{00100010}]-[ID_{00100020}]//{00080018}.dcm",
+    "Personal"     : "d:\\dop\\java\\OHIFGateway\\_docs\\"
+  },
+
+  "Attributes" : [
+    {
+      "Tag"    : "StudyDate",
+      "Value"  : "20171004",
+      "Action" : "Override"
+    },
+
+    {
+      "Tag"    : "00080060",
+      "Value"  : "MR",
+      "Action" : "Override"
+    },
+
+    {
+      "Tag"    : "00100010",
+      "Value"  : "Anon1",
+      "Action" : "Override"
+    }
+
+  ]
+
+}

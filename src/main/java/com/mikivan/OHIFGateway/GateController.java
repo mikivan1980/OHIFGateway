@@ -243,8 +243,7 @@ public class GateController {
 
         //ответ на запрос /mikivan/studylist
         HttpHeaders hdrs = new HttpHeaders();
-        final MediaType mediaType = MediaType.APPLICATION_JSON;
-        hdrs.setContentType(mediaType);
+        hdrs.setContentType(MediaType.APPLICATION_JSON);
 
         final ResponseEntity<String> rsp = new ResponseEntity<String>(toViewStudyList, hdrs, HttpStatus.OK);
 
@@ -291,8 +290,7 @@ public class GateController {
 
         //готовим ответ на запрос
         HttpHeaders hdrs = new HttpHeaders();
-        final MediaType mediaType = MediaType.APPLICATION_JSON;
-        hdrs.setContentType(mediaType);
+        hdrs.setContentType(MediaType.APPLICATION_JSON);
 
         final ResponseEntity<String> rsp = new ResponseEntity<String>(toViewMetaData, hdrs, HttpStatus.OK);
 

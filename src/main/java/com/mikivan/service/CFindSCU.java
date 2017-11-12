@@ -24,8 +24,6 @@ package com.mikivan.service;
         import javax.xml.transform.stream.StreamResult;
         import javax.xml.transform.stream.StreamSource;
 
-        //import org.apache.commons.cli.CommandLine;
-        //import org.apache.commons.cli.ParseException;
         import org.dcm4che3.data.*;
         //import org.dcm4che3.io.DicomInputStream;
         import org.dcm4che3.io.DicomOutputStream;
@@ -44,6 +42,7 @@ package com.mikivan.service;
         import org.dcm4che3.net.pdu.PresentationContext;
         import org.dcm4che3.tool.common.CLIUtils;
         import org.dcm4che3.util.SafeClose;
+        import org.dcm4che3.util.TagUtils;
 
 
 public class CFindSCU {
@@ -85,7 +84,7 @@ public class CFindSCU {
     private int cancelAfter;
     private InformationModel model;
 
-    private int[] inFilter;
+    //private int[] inFilter;
     private Attributes keys = new Attributes();
 
     //output
@@ -102,7 +101,7 @@ public class CFindSCU {
     private OutputStream out;
 
     private Association as;
-    private AtomicInteger totNumMatches = new AtomicInteger();
+    //private AtomicInteger totNumMatches = new AtomicInteger();
 
     //[injections of mikivan][0002]
     private boolean isConstructorWithArgs = false;
@@ -144,51 +143,6 @@ public class CFindSCU {
     }
 
     public final void setXML(boolean xml) { this.xml = xml; }
-
-    public final void setXMLIndent(boolean indent) {
-        this.xmlIndent = indent;
-    }
-
-    public final void setXMLIncludeKeyword(boolean includeKeyword) {
-        this.xmlIncludeKeyword = includeKeyword;
-    }
-
-    public final void setXMLIncludeNamespaceDeclaration(
-            boolean includeNamespaceDeclaration) {
-        this.xmlIncludeNamespaceDeclaration = includeNamespaceDeclaration;
-    }
-
-    public final void setConcatenateOutputFiles(boolean catOut) {
-        this.catOut = catOut;
-    }
-
-    public final void setInputFilter(int[] inFilter) {
-        this.inFilter = inFilter;
-    }
-
-    public ApplicationEntity getApplicationEntity() {
-        return ae;
-    }
-
-    public Connection getRemoteConnection() {
-        return remote;
-    }
-
-    public AAssociateRQ getAAssociateRQ() {
-        return rq;
-    }
-
-    public Association getAssociation() {
-        return as;
-    }
-
-    public Device getDevice() {
-        return device;
-    }
-
-    public Attributes getKeys() {
-        return keys;
-    }
 
 
     //------------------------------------------------------------------------------------------------------------------
@@ -254,11 +208,16 @@ public class CFindSCU {
 
             this.open();
 
-            this.query();
+            this.query(this.keys);
+
+            System.out.println("after --------------------------------------->   this.query();");
 
             if (this.as != null && this.as.isReadyForDataTransfer()) {
+                System.out.println("==================================================>1");
                 this.as.waitForOutstandingRSP();
+                System.out.println("==================================================>2");
                 this.as.release();
+                System.out.println("==================================================>3");
             }
 
             //вывод
@@ -296,12 +255,12 @@ public class CFindSCU {
 
         try{
 
-            String[] bind   = { "IVAN",    "192.168.121.101", "4006"};//строгий порядок
-            String[] remote = { "WATCHER", "192.168.121.100", "4006"};//строгий порядок
-//            String[] bind   = { "IVAN",   "192.168.0.74", "4006"};//строгий порядок
-//            String[] remote = { "PACS01", "192.168.0.35", "4006"};//строгий порядок
+//            String[] bind   = { "IVAN",    "192.168.121.101", "4006"};//строгий порядок
+//            String[] remote = { "WATCHER", "192.168.121.100", "4006"};//строгий порядок
+            String[] bind   = { "IVAN",   "192.168.0.74", "4006"};//строгий порядок
+            String[] remote = { "PACS01", "192.168.0.55", "4006"};//строгий порядок
             String[] opts   = {};
-            String[] m      = { "StudyDate", "20171004-20171004", "ModalitiesInStudy", "CT"};
+            String[] m      = { "StudyDate", "20111004-20171004", "ModalitiesInStudy", "CT"};
             String[] r      = {"0020000D", "00080020", "00080030", "00080050", "00080090", "00100010", "00100020",
                                "00100030", "00100040", "00200010", "00201206", "00201208", "00081030", "00080060",
                                "00080061"};
@@ -326,7 +285,7 @@ public class CFindSCU {
 //======================================================================================================================
 
     private static void configure(Connection conn, String[] opts) throws IOException {
-         //пока сделаем все по умолчанию, предполагая список опций в - opts
+        //пока сделаем все по умолчанию, предполагая список опций в - opts
         //каждый ключ на своем строгом месте в массиве т.е. строгий порядок
         conn.setReceivePDULength(16378);  //"max-pdulen-rcv"
         conn.setSendPDULength(16378);     //"max-pdulen-snd"
@@ -373,12 +332,7 @@ public class CFindSCU {
 //        if (cl.hasOption("cancel"))
 //            main.setCancelAfter(Integer.parseInt(cl.getOptionValue("cancel")));
 //    }
-
 //    private static void configureKeys(CFindSCU main, CommandLine cl) {
-//        CLIUtils.addEmptyAttributes(main.keys, cl.getOptionValues("r"));
-//        CLIUtils.addAttributes(main.keys, cl.getOptionValues("m"));
-////        if (cl.hasOption("L"))
-////            main.addLevel(cl.getOptionValue("L"));
 ////        if (cl.hasOption("i"))
 ////            main.setInputFilter(CLIUtils.toTags(cl.getOptionValues("i")));
 //    }
@@ -389,53 +343,20 @@ public class CFindSCU {
         as = ae.connect(conn, remote, rq);
     }
 
-    public void close() throws IOException, InterruptedException {
-        if (as != null && as.isReadyForDataTransfer()) {
-            as.waitForOutstandingRSP();
-            as.release();
-        }
-        SafeClose.close(out);
-        out = null;
-    }
+//    public void close() throws IOException, InterruptedException {
+//        if (as != null && as.isReadyForDataTransfer()) {
+//            as.waitForOutstandingRSP();
+//            as.release();
+//        }
+//        SafeClose.close(out);
+//        out = null;
+//    }
 
 
-    private static class MergeNested implements Attributes.Visitor {
-        private final Attributes keys;
-
-        MergeNested(Attributes keys) {
-            this.keys = keys;
-        }
-
-        @Override
-        public boolean visit(Attributes attrs, int tag, VR vr, Object val) {
-            if (isNotEmptySequence(val)) {
-                Object o = keys.remove(tag);
-                if (isNotEmptySequence(o))
-                    ((Sequence) val).get(0).addAll(((Sequence) o).get(0));
-            }
-            return true;
-        }
-
-        private static boolean isNotEmptySequence(Object val) {
-            return val instanceof Sequence && !((Sequence) val).isEmpty();
-        }
-    }
-
-    static void mergeKeys(Attributes attrs, Attributes keys) {
-        try {
-            attrs.accept(new MergeNested(keys), false);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        attrs.addAll(keys);
-    }
-
-    public void query() throws IOException, InterruptedException {
-        query(keys);
-    }
 
     private void query(Attributes keys) throws IOException, InterruptedException {
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
+
 
             int cancelAfter = CFindSCU.this.cancelAfter;
             int numMatches;
@@ -443,10 +364,19 @@ public class CFindSCU {
             @Override
             public void onDimseRSP(Association as, Attributes cmd,
                                    Attributes data) {
+                System.out.println("----------------------------------------------------------------- 1 ");
+
+
                 super.onDimseRSP(as, cmd, data);
                 int status = cmd.getInt(Tag.Status, -1);
                 if (Status.isPending(status)) {
+
+                    CFindSCU.this.printAttributes(cmd);
+                    System.out.println("int status = cmd.getInt(Tag.Status, -1) = " + status);
+                    CFindSCU.this.printAttributes(data);
+
                     CFindSCU.this.onResult(data);
+
                     ++numMatches;
                     if (cancelAfter != 0 && numMatches >= cancelAfter)
                         try {
@@ -456,51 +386,27 @@ public class CFindSCU {
                             e.printStackTrace();
                         }
                 }
+
+                System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 1 ");
+
             }
         };
 
-        query(keys, rspHandler);
-    }
-
-    public void query( DimseRSPHandler rspHandler) throws IOException, InterruptedException {
-        query(keys, rspHandler);
-    }
-
-    private void query(Attributes keys, DimseRSPHandler rspHandler) throws IOException, InterruptedException {
+        //query(keys, rspHandler);
+        System.out.println("next ---------------------------->   as.cfind(model.cuid, priority, keys, null, rspHandler);");
         as.cfind(model.cuid, priority, keys, null, rspHandler);
+        System.out.println("after --------------------------->   as.cfind(model.cuid, priority, keys, null, rspHandler);");
     }
+
+
 
     private void onResult(Attributes data) {
-        int numMatches = totNumMatches.incrementAndGet();
-
-        //[injections of comment from mikivan][0006]
-
-        //отключили проверку наличия ключа --out-dir
-        /*
-        if (outDir == null)
-            return;
-        */
-        //[end][0006]
+        //int numMatches = totNumMatches.incrementAndGet();
 
         try {
             if (out == null) {
 
-                //[injections of comment from mikivan][0007]
-
-                //здесь определяется тип выходного потока
-                /*
-                File f = new File(outDir, fname(numMatches));
-                out = new BufferedOutputStream( new FileOutputStream(f) );
-                */
-                //[end][0007]
-
-                //[injections of mikivan][0008]
-
-                //собираем вывод в ByteArrayOutputStream - представляет поток вывода,
-                //использующий массив байтов в качестве места вывода.
-
                 out = new ByteArrayOutputStream();
-                //[end][0008]
 
             }
             if (xml) {
@@ -547,6 +453,30 @@ public class CFindSCU {
         xsltTpls = tpls = tf.newTemplates(new StreamSource(xsltFile));
 
         return tf.newTransformerHandler(tpls);
+    }
+
+
+
+    public void printAttributes( Attributes instanceAttr ){
+
+        int nAttr = instanceAttr.size();
+
+        for(int i = 0; i < nAttr; i++){
+
+            int Tag_i = instanceAttr.tags()[i];
+            String Tag_VR = instanceAttr.getVR(Tag_i).toString();
+
+            System.out.print(
+                    "[Attribute]/> " + "[" + nAttr + ", " + i + "] -> " +
+                    TagUtils.toHexString(Tag_i) + " :->  " + TagUtils.toString(Tag_i) + "  :  " + Tag_VR + "  >  "
+            );
+
+            if( Tag_VR.equals("DA")|| Tag_VR.equals("PN")|| Tag_VR.equals("UI")|| Tag_VR.equals("CS")|| Tag_VR.equals("TM") ){
+                System.out.println(instanceAttr.getString( Tag_i ));
+            }else{
+                System.out.println();
+            }
+        }
     }
 
 

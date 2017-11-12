@@ -6,19 +6,20 @@ package com.mikivan.service;
         import java.io.IOException;
         import java.util.ArrayList;
 
-
         import org.dcm4che3.data.Attributes;
         import org.dcm4che3.data.Attributes.*;
         import org.dcm4che3.data.Tag;
-        import org.dcm4che3.util.TagUtils;
-        //import org.dcm4che3.data.VR;
+        import org.dcm4che3.data.ElementDictionary;
+
         import org.dcm4che3.io.DicomInputStream;
         import org.dcm4che3.io.DicomOutputStream;
         import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+
         import org.dcm4che3.tool.common.CLIUtils;
+
         import org.dcm4che3.util.AttributesFormat;
         import org.dcm4che3.util.SafeClose;
-
+        import org.dcm4che3.util.TagUtils;
 
 
 public class dcmModifier{
@@ -100,6 +101,34 @@ public class dcmModifier{
 
             seedAttributes = inDicomObject.readDataset(-1, -1);
             //metaAttributes = inDicomObject.readFileMetaInformation();
+
+            //test part
+            System.out.println("+" + seedAttributes.size());
+            seedAttributes.remove(TagUtils.toTag(0x10,0x10));
+            seedAttributes.remove(TagUtils.toTag(0x10,0x10));
+            System.out.println("+" + seedAttributes.size());
+
+
+
+            int nAttr = seedAttributes.size();
+            for(int i = 0; i < nAttr; i++){
+
+                int Tag_i = seedAttributes.tags()[i];
+                String Tag_VR = seedAttributes.getVR(Tag_i).toString();
+
+                System.out.print("[Attribute]/> " + "[" + nAttr + ", " + i + "] -> " +
+                        TagUtils.toHexString(Tag_i) + " :->  " + TagUtils.toString(Tag_i) + "  :  " + Tag_VR + //ElementDictionary.vrOf(Tag_i,"") +
+                        "  >  "//seedAttributes.getString( Tag_i ).length() + " | " //+ seedAttributes.getString( Tag_i )
+                        );
+                if( Tag_VR.equals("DA")|| Tag_VR.equals("PN")|| Tag_VR.equals("UI")|| Tag_VR.equals("CS")|| Tag_VR.equals("TM") ){
+                    System.out.println(seedAttributes.getString( Tag_i ));
+                }else{
+                    System.out.println();
+                }
+            }
+
+            //----------------------------------------------------------------------------------------------------------
+
 
             tsuid = inDicomObject.getTransferSyntax();
             iuid  = seedAttributes.getString(Tag.AffectedSOPInstanceUID);

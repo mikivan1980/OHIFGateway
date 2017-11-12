@@ -1,7 +1,7 @@
 {
 
   "Path": {
-    "Source"       : "d:\\dop\\java\\OHIFGateway\\_docs\\dcm_in\\PA000000\\",
+    "Source"       : "d:\\dop\\java\\OHIFGateway\\_docs\\dcm_in\\PA000000\\ST000000\\SE000000\\",
     "Destination"  : "d:\\dop\\java\\OHIFGateway\\_docs\\dcm_out\\",
     "Pattern"      : "//{00080060}{00080020}//ST_{0020000D}//SE_{0020000E}//IM_{00080018}.dcm",
     "Personal"     : "d:\\dop\\java\\OHIFGateway\\_docs\\undo.json"

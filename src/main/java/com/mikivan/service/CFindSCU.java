@@ -50,7 +50,6 @@ public class CFindSCU {
     private final AAssociateRQ rq = new AAssociateRQ();
 
     private Attributes keys = new Attributes();
-    //private Association as;
 
     private int priority;
     private int cancelAfter;

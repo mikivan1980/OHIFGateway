@@ -1,20 +1,11 @@
 package com.mikivan.service;
 
 
-//[injections of mikivan][0001]
         import java.io.ByteArrayOutputStream;
-//[end][0001]
-
-        //import java.io.BufferedOutputStream;
         import java.io.File;
         import java.io.IOException;
         import java.io.OutputStream;
-        import java.security.GeneralSecurityException;
-        import java.util.EnumSet;
-        //import java.util.List;
-        //import java.util.ResourceBundle;
         import java.util.concurrent.Executors;
-        import java.util.concurrent.atomic.AtomicInteger;
 
         import javax.xml.transform.OutputKeys;
         import javax.xml.transform.Templates;
@@ -25,20 +16,15 @@ package com.mikivan.service;
         import javax.xml.transform.stream.StreamSource;
 
         import org.dcm4che3.data.*;
-        //import org.dcm4che3.io.DicomInputStream;
         import org.dcm4che3.io.DicomOutputStream;
-        //import org.dcm4che3.io.SAXReader;
         import org.dcm4che3.io.SAXWriter;
         import org.dcm4che3.net.ApplicationEntity;
         import org.dcm4che3.net.Association;
         import org.dcm4che3.net.Connection;
         import org.dcm4che3.net.Device;
         import org.dcm4che3.net.DimseRSPHandler;
-        import org.dcm4che3.net.IncompatibleConnectionException;
-        import org.dcm4che3.net.QueryOption;
         import org.dcm4che3.net.Status;
         import org.dcm4che3.net.pdu.AAssociateRQ;
-        import org.dcm4che3.net.pdu.ExtendedNegotiation;
         import org.dcm4che3.net.pdu.PresentationContext;
         import org.dcm4che3.tool.common.CLIUtils;
         import org.dcm4che3.util.SafeClose;
@@ -47,92 +33,78 @@ package com.mikivan.service;
 
 public class CFindSCU {
 
-    public static enum InformationModel {
-        StudyRoot(UID.StudyRootQueryRetrieveInformationModelFIND, "STUDY");
+    // Context Presentation UID
+    private static String cuid = UID.StudyRootQueryRetrieveInformationModelFIND;
 
-        final String cuid;
-        final String level;
-
-        InformationModel(String cuid, String level) {
-            this.cuid = cuid;
-            this.level = level;
-        }
-
-        public void adjustQueryOptions(EnumSet<QueryOption> queryOptions) {
-            if (level == null) {
-                queryOptions.add(QueryOption.RELATIONAL);
-                queryOptions.add(QueryOption.DATETIME);
-            }
-        }
-    }
-
+    // Transfer Syntax
     private static String[] IVR_LE_FIRST = new String[]{"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"};
     private static String[] EVR_LE_FIRST = new String[]{"1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2", "1.2.840.10008.1.2"};
     private static String[] EVR_BE_FIRST = new String[]{"1.2.840.10008.1.2.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2"};
     private static String[] IVR_LE_ONLY  = new String[]{"1.2.840.10008.1.2"};
 
-//    private static ResourceBundle rb =
-//            ResourceBundle.getBundle("org.dcm4che3.tool.findscu.messages");
-    private static SAXTransformerFactory saxtf;
 
     private final Device device = new Device("findscu");
     private final ApplicationEntity ae = new ApplicationEntity("findscu");
     private final Connection conn = new Connection();
     private final Connection remote = new Connection();
     private final AAssociateRQ rq = new AAssociateRQ();
+
+    private Attributes keys = new Attributes();
+    //private Association as;
+
     private int priority;
     private int cancelAfter;
-    private InformationModel model;
 
-    //private int[] inFilter;
-    private Attributes keys = new Attributes();
+    private static SAXTransformerFactory saxtf;
 
-    //output
-    private boolean catOut = true;               //"--out-cat" - объеденить все ответы от удаленного диком сервера
-    //apply specified XSLT stylesheet to XML representation of received matches; implies -X
     private boolean xml = true;                  //"-X", "--xml" - вывод будет xml или обработаннный xslt.
-    //use additional whitespace in XML output
-    private boolean xmlIndent = true;           //"-I", "--indent" -
-    //do not include keyword attribute of DicomAttribute element in XML output
-    private boolean xmlIncludeKeyword = false;   //"-K", "--no-keyword" - включать ли keyword в xml вывод
-    private boolean xmlIncludeNamespaceDeclaration = false;
     private File xsltFile;
-    private Templates xsltTpls;
     private OutputStream out;
 
-    private Association as;
-    //private AtomicInteger totNumMatches = new AtomicInteger();
-
-    //[injections of mikivan][0002]
     private boolean isConstructorWithArgs = false;
-    //[end][0002]
 
 
-    public final void setPriority(int priority) {
-        this.priority = priority;
-    }
+    private class DimseRSPHandlerCFineSCU extends DimseRSPHandler {
 
-    public final void setInformationModel(
-            InformationModel model,
-            String[] tss,
-            EnumSet<QueryOption> queryOptions) {
-
-        this.model = model;
-        rq.addPresentationContext(new PresentationContext(1, model.cuid, tss));
-
-        if (!queryOptions.isEmpty()) {
-            model.adjustQueryOptions(queryOptions);
-            rq.addExtendedNegotiation(new ExtendedNegotiation(model.cuid,
-                    QueryOption.toExtendedNegotiationInformation(queryOptions)));
+        private DimseRSPHandlerCFineSCU(int msgId) {
+            super(msgId);
         }
 
-        if (model.level != null)
-            addLevel(model.level);
+        int cancelAfter = CFindSCU.this.cancelAfter;
+        int numMatches;
+
+        @Override
+        public void onDimseRSP( Association as, Attributes cmd, Attributes data) {
+
+            System.out.println("numMatches+++++++++++++++++++++++++++++++++++++++++   " + numMatches);
+            System.out.println("cancelAfter++++++++++++++++++++++++++++++++++++++++   " + cancelAfter);
+
+            super.onDimseRSP(as, cmd, data);
+            int status = cmd.getInt(Tag.Status, -1);
+            if (Status.isPending(status)) {
+
+                CFindSCU.this.printAttributes(cmd);
+                System.out.println("int status = cmd.getInt(Tag.Status, -1) = " + status);
+                CFindSCU.this.printAttributes(data);
+
+                CFindSCU.this.onResult(data);
+
+                ++numMatches;
+                if (cancelAfter != 0 && numMatches >= cancelAfter)
+                    try {
+                        System.out.println("-- cancelAfter -- cancelAfter -- cancelAfter -- cancelAfter -- cancelAfter --");
+                        cancel(as);
+                        cancelAfter = 0;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            }
+        }
     }
 
-    public void addLevel(String s) {
-        keys.setString(Tag.QueryRetrieveLevel, VR.CS, s);
-    }
+
+
+    public final void setPriority(int priority) { this.priority = priority;}
 
     public final void setCancelAfter(int cancelAfter) {
         this.cancelAfter = cancelAfter;
@@ -156,45 +128,38 @@ public class CFindSCU {
                       String[] m,
                       String[] r) throws IOException {
 
-        this.device.addConnection(conn);
-        this.device.addApplicationEntity(ae);
-        this.ae.addConnection(conn);
-
-        //замена CLIUtils.configureConnect(this.remote, this.rq, cl);
-        this.rq.setCalledAET(c[0]);
-        this.remote.setHostname(c[1]);
-        this.remote.setPort(Integer.parseInt(c[2]));
-        //без настройки proxy, есть в CLIUtils.configureConnect
-
-        //замена CLIUtils.configureBind(this.conn, this.ae, cl);
-        this.ae.setAETitle(b[0]);
+        // local service connector
         this.conn.setHostname(b[1]);
         this.conn.setPort(Integer.parseInt(b[2]));
 
-        //замена CLIUtils.configure(this.conn, cl);
-        configure(this.conn, opts);
+        // remote pacs
+        this.remote.setHostname(c[1]);
+        this.remote.setPort(Integer.parseInt(c[2]));
+        //this.remote.setTlsProtocols(this.conn.getTlsProtocols());
+        //this.remote.setTlsCipherSuites(this.conn.getTlsCipherSuites());
 
-        this.remote.setTlsProtocols(this.conn.getTlsProtocols());
-        this.remote.setTlsCipherSuites(this.conn.getTlsCipherSuites());
+        configure(this.conn, opts); //замена CLIUtils.configure(this.conn, cl); //настройки proxy, есть в CLIUtils.configureConnect
 
-        //configureServiceClass(this, cl);
-        this.setInformationModel(
-                InformationModel.StudyRoot,
-                IVR_LE_FIRST,//CLIUtils.transferSyntaxesOf(cl),
-                queryOptionsOf(this));
+        this.ae.setAETitle(b[0]);
+        this.ae.addConnection(conn);
 
-        //configureKeys(this, cl);
-        this.addLevel(findLevel);
+        this.rq.setCalledAET(c[0]);
+        this.rq.setCallingAET(b[0]);
+        this.rq.addPresentationContext(new PresentationContext(1, cuid, IVR_LE_FIRST));
+
+        // составляем аттрибуты для отправке в запросе
+        keys.setString(Tag.QueryRetrieveLevel, VR.CS, findLevel);
         CLIUtils.addEmptyAttributes(this.keys, r);
         CLIUtils.addAttributes(this.keys, m);
 
-        //configureOutput(this, cl);
-        if (!fileXSLT.equals("")) this.setXSLT( new File( fileXSLT ) );
 
-        //configureCancel(this, cl);
+        if (!fileXSLT.equals("")) this.setXSLT( new File( fileXSLT ) );
 
         //this.setPriority(CLIUtils.priorityOf(cl));
         this.setPriority(0);
+
+        // через сколько направленных с удаленного пакса записей отменить ассоциацию, ноль не отменять, принять все найденные записи
+        this.setCancelAfter(0);
 
         this.isConstructorWithArgs = true;
     }
@@ -203,21 +168,21 @@ public class CFindSCU {
     public String doFind() throws  Exception{
         if(this.isConstructorWithArgs){
 
+            this.device.addConnection(conn);
+            this.device.addApplicationEntity(ae);
+
             this.device.setExecutor2( Executors.newSingleThreadExecutor() );
             this.device.setScheduledExecutor( Executors.newSingleThreadScheduledExecutor() );
 
-            this.open();
+            Association as = ae.connect(conn, remote, rq);
 
-            this.query(this.keys);
+            DimseRSPHandler rspHandler = new DimseRSPHandlerCFineSCU( as.nextMessageID() );
+            as.cfind( cuid, priority, this.keys, null, rspHandler);
 
-            System.out.println("after --------------------------------------->   this.query();");
+            if (as.isReadyForDataTransfer()) {
 
-            if (this.as != null && this.as.isReadyForDataTransfer()) {
-                System.out.println("==================================================>1");
-                this.as.waitForOutstandingRSP();
-                System.out.println("==================================================>2");
-                this.as.release();
-                System.out.println("==================================================>3");
+                as.waitForOutstandingRSP();  // обработка получаемых данных в onDimseRSP из rspHandler
+                as.release();
             }
 
             //вывод
@@ -228,11 +193,12 @@ public class CFindSCU {
 
             SafeClose.close(this.out);
             this.out = null;
+            //
 
             this.device.getExecutor2().shutdown();
             this.device.getScheduledExecutor().shutdown();
 
-            this.as.waitForSocketClose();
+            as.waitForSocketClose();
 
             this.isConstructorWithArgs = false;
 
@@ -252,7 +218,6 @@ public class CFindSCU {
     public static void main(String[] args) {
 //======================================================================================================================
 //-b IVAN@192.168.0.74:4006 -c PACS01@192.168.0.35:4006 -L STUDY -m StudyDate=20120101-20161231 -m ModalitiesInStudy=CT --out-cat  -X -K -I
-
         try{
 
 //            String[] bind   = { "IVAN",    "192.168.121.101", "4006"};//строгий порядок
@@ -316,98 +281,12 @@ public class CFindSCU {
     }
 
 
-    private static EnumSet<QueryOption> queryOptionsOf(CFindSCU main) {
-        EnumSet<QueryOption> queryOptions = EnumSet.noneOf(QueryOption.class);
-        if(false) {
-            queryOptions.add(QueryOption.RELATIONAL);  //"relational"
-            queryOptions.add(QueryOption.DATETIME);    //"datetime"
-            queryOptions.add(QueryOption.FUZZY);       //"fuzzy"
-            queryOptions.add(QueryOption.TIMEZONE);    //"timezone"
-        }
-        return queryOptions;
-    }
-
-
-//    private static void configureCancel(CFindSCU main, CommandLine cl) {
-//        if (cl.hasOption("cancel"))
-//            main.setCancelAfter(Integer.parseInt(cl.getOptionValue("cancel")));
-//    }
-//    private static void configureKeys(CFindSCU main, CommandLine cl) {
-////        if (cl.hasOption("i"))
-////            main.setInputFilter(CLIUtils.toTags(cl.getOptionValues("i")));
-//    }
-
-
-    public void open() throws IOException, InterruptedException,
-            IncompatibleConnectionException, GeneralSecurityException {
-        as = ae.connect(conn, remote, rq);
-    }
-
-//    public void close() throws IOException, InterruptedException {
-//        if (as != null && as.isReadyForDataTransfer()) {
-//            as.waitForOutstandingRSP();
-//            as.release();
-//        }
-//        SafeClose.close(out);
-//        out = null;
-//    }
-
-
-
-    private void query(Attributes keys) throws IOException, InterruptedException {
-        DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
-
-
-            int cancelAfter = CFindSCU.this.cancelAfter;
-            int numMatches;
-
-            @Override
-            public void onDimseRSP(Association as, Attributes cmd,
-                                   Attributes data) {
-                System.out.println("----------------------------------------------------------------- 1 ");
-
-
-                super.onDimseRSP(as, cmd, data);
-                int status = cmd.getInt(Tag.Status, -1);
-                if (Status.isPending(status)) {
-
-                    CFindSCU.this.printAttributes(cmd);
-                    System.out.println("int status = cmd.getInt(Tag.Status, -1) = " + status);
-                    CFindSCU.this.printAttributes(data);
-
-                    CFindSCU.this.onResult(data);
-
-                    ++numMatches;
-                    if (cancelAfter != 0 && numMatches >= cancelAfter)
-                        try {
-                            cancel(as);
-                            cancelAfter = 0;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                }
-
-                System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 1 ");
-
-            }
-        };
-
-        //query(keys, rspHandler);
-        System.out.println("next ---------------------------->   as.cfind(model.cuid, priority, keys, null, rspHandler);");
-        as.cfind(model.cuid, priority, keys, null, rspHandler);
-        System.out.println("after --------------------------->   as.cfind(model.cuid, priority, keys, null, rspHandler);");
-    }
-
-
-
     private void onResult(Attributes data) {
-        //int numMatches = totNumMatches.incrementAndGet();
 
         try {
             if (out == null) {
 
                 out = new ByteArrayOutputStream();
-
             }
             if (xml) {
                 writeAsXML(data, out);
@@ -420,23 +299,23 @@ public class CFindSCU {
             e.printStackTrace();
             SafeClose.close(out);
             out = null;
-        } finally {
-            if (!catOut) {
-                SafeClose.close(out);
-                out = null;
-            }
         }
+//        finally {
+//            if (!catOut) {      // catOut = true; "--out-cat" - объеденить все ответы от удаленного диком сервера
+//                SafeClose.close(out);
+//                out = null;
+//            }
+//        }
     }
 
 
     private void writeAsXML(Attributes attrs, OutputStream out) throws Exception {
         TransformerHandler th = getTransformerHandler();
-        th.getTransformer().setOutputProperty(OutputKeys.INDENT,
-                xmlIndent ? "yes" : "no");
+        th.getTransformer().setOutputProperty(OutputKeys.INDENT,"yes");   //private boolean xmlIndent = true;
         th.setResult(new StreamResult(out));
         SAXWriter saxWriter = new SAXWriter(th);
-        saxWriter.setIncludeKeyword(xmlIncludeKeyword);
-        saxWriter.setIncludeNamespaceDeclaration(xmlIncludeNamespaceDeclaration);
+        saxWriter.setIncludeKeyword(false);  //"-K", "--no-keyword" - включать ли keyword в xml вывод
+        saxWriter.setIncludeNamespaceDeclaration(false);
         saxWriter.write(attrs);
     }
 
@@ -448,16 +327,14 @@ public class CFindSCU {
         if (xsltFile == null)
             return tf.newTransformerHandler();
 
-        Templates tpls = xsltTpls;
-        if (tpls == null);
-        xsltTpls = tpls = tf.newTemplates(new StreamSource(xsltFile));
+        Templates xsltTpls = tf.newTemplates(new StreamSource(xsltFile));
 
-        return tf.newTransformerHandler(tpls);
+        return tf.newTransformerHandler(xsltTpls);
     }
 
 
 
-    public void printAttributes( Attributes instanceAttr ){
+    private void printAttributes( Attributes instanceAttr ){
 
         int nAttr = instanceAttr.size();
 

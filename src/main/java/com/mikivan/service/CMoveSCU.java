@@ -81,14 +81,14 @@ public class CMoveSCU extends Device {
         this.destination = destination;
     }
 
-    public void addKey(int tag, String... ss) {
-        VR vr = ElementDictionary.vrOf(tag, keys.getPrivateCreator(tag));
-        keys.setString(tag, vr, ss);
-    }
+//    public void addKey(int tag, String... ss) {
+//        VR vr = ElementDictionary.vrOf(tag, keys.getPrivateCreator(tag));
+//        keys.setString(tag, vr, ss);
+//    }
 
-    public final void setInputFilter(int[] inFilter) {
-        this.inFilter  = inFilter;
-    }
+//    public final void setInputFilter(int[] inFilter) {
+//        this.inFilter  = inFilter;
+//    }
 
 
     //------------------------------------------------------------------------------------------------------------------

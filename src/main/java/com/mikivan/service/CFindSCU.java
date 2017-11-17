@@ -43,7 +43,7 @@ public class CFindSCU {
     private static String[] IVR_LE_ONLY  = new String[]{"1.2.840.10008.1.2"};
 
 
-    private final Device device = new Device("findscu");
+    private final Device device = new Device("findscu");  //? to doFind()
     private final ApplicationEntity ae = new ApplicationEntity("findscu");
     private final Connection conn = new Connection();
     private final Connection remote = new Connection();
@@ -80,11 +80,11 @@ public class CFindSCU {
 
             super.onDimseRSP(as, cmd, data);
             int status = cmd.getInt(Tag.Status, -1);
+            System.out.println( "[STATUS]/> " + Integer.toHexString(status) );
             if (Status.isPending(status)) {
 
-                CFindSCU.this.printAttributes(cmd);
-                System.out.println("int status = cmd.getInt(Tag.Status, -1) = " + status);
-                CFindSCU.this.printAttributes(data);
+                CFindSCU.this.printAttributes(cmd);    System.out.println();
+                CFindSCU.this.printAttributes(data);   System.out.println();
 
                 CFindSCU.this.onResult(data);
 
@@ -102,17 +102,13 @@ public class CFindSCU {
     }
 
 
-
     public final void setPriority(int priority) { this.priority = priority;}
-
     public final void setCancelAfter(int cancelAfter) {
         this.cancelAfter = cancelAfter;
     }
-
     public final void setXSLT(File xsltFile) {
         this.xsltFile = xsltFile;
     }
-
     public final void setXML(boolean xml) { this.xml = xml; }
 
 
@@ -151,7 +147,6 @@ public class CFindSCU {
         CLIUtils.addEmptyAttributes(this.keys, r);
         CLIUtils.addAttributes(this.keys, m);
 
-
         if (!fileXSLT.equals("")) this.setXSLT( new File( fileXSLT ) );
 
         //this.setPriority(CLIUtils.priorityOf(cl));
@@ -179,7 +174,6 @@ public class CFindSCU {
             as.cfind( cuid, priority, this.keys, null, rspHandler);
 
             if (as.isReadyForDataTransfer()) {
-
                 as.waitForOutstandingRSP();  // обработка получаемых данных в onDimseRSP из rspHandler
                 as.release();
             }
@@ -204,7 +198,6 @@ public class CFindSCU {
             return output;
         }
         else{
-
             return null;
         }
     }
@@ -218,7 +211,6 @@ public class CFindSCU {
 //======================================================================================================================
 //-b IVAN@192.168.0.74:4006 -c PACS01@192.168.0.35:4006 -L STUDY -m StudyDate=20120101-20161231 -m ModalitiesInStudy=CT --out-cat  -X -K -I
         try{
-
 //            String[] bind   = { "IVAN",    "192.168.121.101", "4006"};//строгий порядок
 //            String[] remote = { "WATCHER", "192.168.121.100", "4006"};//строгий порядок
             String[] bind   = { "IVAN",   "192.168.0.74", "4006"};//строгий порядок
@@ -234,11 +226,9 @@ public class CFindSCU {
 
             String xsltOutput = main.doFind();
 
-
             if( xsltOutput == null )
                  System.out.println("xsltOutput == null");
             else System.out.println(xsltOutput);
-
 
         } catch (Exception e) {
             System.err.println("c-find-scu: " + e.getMessage());
@@ -284,7 +274,6 @@ public class CFindSCU {
 
         try {
             if (out == null) {
-
                 out = new ByteArrayOutputStream();
             }
             if (xml) {
@@ -302,11 +291,8 @@ public class CFindSCU {
 //        finally {
 //            if (!catOut) {      // catOut = true; "--out-cat" - объеденить все ответы от удаленного диком сервера
 //                SafeClose.close(out);
-//                out = null;
-//            }
-//        }
+//                out = null; }}
     }
-
 
     private void writeAsXML(Attributes attrs, OutputStream out) throws Exception {
         TransformerHandler th = getTransformerHandler();
@@ -320,40 +306,31 @@ public class CFindSCU {
 
     private TransformerHandler getTransformerHandler() throws Exception {
         SAXTransformerFactory tf = saxtf;
-        if (tf == null)
-            saxtf = tf = (SAXTransformerFactory) TransformerFactory
-                    .newInstance();
-        if (xsltFile == null)
-            return tf.newTransformerHandler();
+        if (tf == null) saxtf = tf = (SAXTransformerFactory) TransformerFactory.newInstance();
+        if (xsltFile == null) return tf.newTransformerHandler();
 
         Templates xsltTpls = tf.newTemplates(new StreamSource(xsltFile));
 
         return tf.newTransformerHandler(xsltTpls);
     }
 
-
-
     private void printAttributes( Attributes instanceAttr ){
 
         int nAttr = instanceAttr.size();
-
         for(int i = 0; i < nAttr; i++){
-
             int Tag_i = instanceAttr.tags()[i];
             String Tag_VR = instanceAttr.getVR(Tag_i).toString();
-
             System.out.print(
                     "[Attribute]/> " + "[" + nAttr + ", " + i + "] -> " +
                     TagUtils.toHexString(Tag_i) + " :->  " + TagUtils.toString(Tag_i) + "  :  " + Tag_VR + "  >  "
             );
 
-            if( Tag_VR.equals("DA")|| Tag_VR.equals("PN")|| Tag_VR.equals("UI")|| Tag_VR.equals("CS")|| Tag_VR.equals("TM") ){
+            if( Tag_VR.equals("DA")|| Tag_VR.equals("PN")|| Tag_VR.equals("UI")|| Tag_VR.equals("CS")|| Tag_VR.equals("TM")||Tag_VR.equals("US") ){
                 System.out.println(instanceAttr.getString( Tag_i ));
             }else{
                 System.out.println();
             }
         }
     }
-
 
 }
